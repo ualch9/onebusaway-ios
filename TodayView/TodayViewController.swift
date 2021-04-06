@@ -156,7 +156,7 @@ class TodayViewController: UIViewController, BookmarkDataDelegate, NCWidgetProvi
     private func displayErrorMessagesIfAppropriate() {
         if bestAvailableBookmarks.isEmpty {
             let title = OBALoc("today_screen.no_data_title", value: "No Bookmarks", comment: "The empty data set title for the Today View widget.")
-            let description = OBALoc("today_screen.no_data_description", value: "Add bookmarks to Today View Bookmarks to see them here.", comment: "The empty data set description for the Today View widget.")
+            let description = OBALoc("today_screen.no_data_description", value: "Favorite bookmarks will appear here.", comment: "The empty data set description for the Today View widget.")
             showErrorMessage(title: title, description: description)
         } else if app.currentRegion == nil {
             showErrorMessage(title: Strings.error, description: OBALoc("today_screen.no_region_description", value: "We don't know where you're located. Please choose a region in OneBusAway.", comment: ""))

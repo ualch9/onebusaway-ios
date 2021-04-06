@@ -80,21 +80,21 @@ class EditBookmarkViewController: FormViewController, AddGroupAlertDelegate {
 
     private let selectedGroupTag = "groupTag"
     private let bookmarkNameTag = "name"
-    private let showInTodayViewTag = "todayView"
+    private let favoriteTag = "favorite"
 
     /// Creates, loads, and populates data in the Eureka Form object.
     private func loadForm() {
         form
             +++ bookmarkNameSection
-            +++ showInTodayViewSection
+            +++ favoriteSection
             +++ selectedBookmarkGroupSection
             +++ addGroupSection
 
         let name = bookmark?.name ?? dataObjectName
         let groupID = bookmark?.groupID?.uuidString ?? ""
-        let todayViewSwitch = bookmark?.isFavorite ?? true
+        let favoriteSwitch = bookmark?.isFavorite ?? true
 
-        form.setValues([bookmarkNameTag: name, selectedGroupTag: groupID, showInTodayViewTag: todayViewSwitch])
+        form.setValues([bookmarkNameTag: name, selectedGroupTag: groupID, favoriteTag: favoriteSwitch])
     }
 
     /// The `Form` section that contains the Bookmark Name `TextRow`.
@@ -108,12 +108,22 @@ class EditBookmarkViewController: FormViewController, AddGroupAlertDelegate {
         return section
     }()
 
-    private lazy var showInTodayViewSection: Section = {
-        let section = Section()
+    private lazy var favoriteSection: Section = {
+        let footerText: String
 
-        section <<< SwitchRow(showInTodayViewTag) {
-            $0.tag = showInTodayViewTag
-            $0.title = OBALoc("edit_bookmark_controller.show_in_today_view_switch_title", value: "Show in Today View widget", comment: "Title next to the switch that toggles whether a bookmark will appear in the today view.")
+        // TODO: There are two different footer texts, one for widgets on ios14+
+        // and one as a fallback for the today view. alan widget <- note to self.
+//        if #available(iOS 14, *) {
+//            footerText = "Favorites will appear on the top of the list and on the \"Favorites\" Widget"
+//        } else {
+        footerText = OBALoc("edit_bookmark_Controller.favorite_footer_today_view_description", value: "Favorites will appear on the top of the list and on the Today View widget", comment: "")
+//        }
+
+        let section = Section(footer: footerText)
+
+        section <<< SwitchRow(favoriteTag) {
+            $0.tag = favoriteTag
+            $0.title = OBALoc("edit_bookmark_controller.favorite_switch_title", value: "Favorite", comment: "")
         }
 
         return section
@@ -208,7 +218,7 @@ class EditBookmarkViewController: FormViewController, AddGroupAlertDelegate {
             bookmark.name = name
         }
 
-        let faveVal = form.values()[showInTodayViewTag]
+        let faveVal = form.values()[favoriteTag]
         bookmark.isFavorite = faveVal as! Bool // swiftlint:disable:this force_cast
 
         application.userDataStore.add(bookmark, to: selectedBookmarkGroup)
