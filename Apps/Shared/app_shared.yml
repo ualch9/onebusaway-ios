@@ -27,6 +27,7 @@ targets:
     dependencies:
       - target: OBAKitCore
       - target: OBAKit
+      - target: OBAWidget
       - target: TodayView
     info:
       properties:
