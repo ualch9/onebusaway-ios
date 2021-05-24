@@ -10,24 +10,12 @@ import SwiftUI
 struct ScheduleStatusViewModifier: ViewModifier {
     var scheduleStatus: ScheduleStatus
 
-    var scheduleStatusColor: Color {
-        switch scheduleStatus {
-        case .delayed:
-            return Color(ThemeColors.shared.departureLateBackground)
-        case .early:
-            return Color(ThemeColors.shared.departureEarlyBackground)
-        case .onTime:
-            return Color(ThemeColors.shared.departureOnTimeBackground)
-        case .unknown:
-            return Color(ThemeColors.shared.departureUnknownBackground)
-        }
-    }
-
     func body(content: Content) -> some View {
         content
+            .foregroundColor(Color(ThemeColors.shared.lightText))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // ↑ For resizable background frame. See preview "multiple labels of same size".
-            .background(scheduleStatusColor)
+            .background(Color.scheduleStatus(scheduleStatus))
     }
 }
 
@@ -46,6 +34,30 @@ extension View {
     }
 }
 
+extension Color {
+    /// The color indicator for the given `ScheduleStatus`.
+    /// - parameter scheduleStatus: `ScheduleStatus`
+    /// - returns: The corresponding color.
+    ///
+    /// ## Example Usage
+    /// ```swift
+    /// Text("5m")
+    ///    .background(Color.scheduleStatus(.onTime))
+    /// ```
+    static public func scheduleStatus(_ scheduleStatus: ScheduleStatus) -> Color {
+        switch scheduleStatus {
+        case .delayed:
+            return Color(ThemeColors.shared.departureLateBackground)
+        case .early:
+            return Color(ThemeColors.shared.departureEarlyBackground)
+        case .onTime:
+            return Color(ThemeColors.shared.departureOnTimeBackground)
+        case .unknown:
+            return Color(ThemeColors.shared.departureUnknownBackground)
+        }
+    }
+}
+
 struct ScheduleStatusViewModifierPreviews: PreviewProvider {
     static var previews: some View {
         VStack(alignment: .center, spacing: 16) {
@@ -55,6 +67,8 @@ struct ScheduleStatusViewModifierPreviews: PreviewProvider {
                 .scheduleStatus(.early)
             Text("12345m")
                 .scheduleStatus(.delayed)
+            Image(systemName: "ant.fill")
+                .scheduleStatus(.early)
         }
         .fixedSize()
         .padding()
