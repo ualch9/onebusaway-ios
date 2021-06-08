@@ -135,6 +135,7 @@ public class OBAListRowView: UIView, OBAContentView {
     var userView: UIView!
     var imageView: UIImageView!
     private var accessoryView: UIImageView!
+    private var outerStack: UIStackView!
 
     lazy var rowHeightConstraint: NSLayoutConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: configuration.minimumCellHeight)
 
@@ -165,17 +166,21 @@ public class OBAListRowView: UIView, OBAContentView {
             arrangedSubviews: [imageView, userView])
         contentStack.spacing = ThemeMetrics.padding
 
-        let outerStack = UIStackView.stack(axis: .horizontal, distribution: .fillProportionally, alignment: .center, arrangedSubviews: [contentStack, accessoryView])
+        outerStack = UIStackView.stack(axis: .horizontal, distribution: .fillProportionally, alignment: .center, arrangedSubviews: [contentStack, accessoryView])
         outerStack.spacing = ThemeMetrics.padding
         outerStack.backgroundColor = .clear
 
         addSubview(outerStack)
 
+        configureView()
+    }
+
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+
         outerStack.pinToSuperview(.readableContent) {
             $0.trailing.priority = .required - 1
         }
-
-        configureView()
 
         NSLayoutConstraint.activate([rowHeightConstraint])
     }
@@ -265,15 +270,15 @@ struct OBAListRowView_Previews: PreviewProvider {
             Group {
                 UIViewPreview {
                     defaultRow
-                }.previewDisplayName("Default")
+                }.previewDisplayName("Standard Default")
 
                 UIViewPreview {
                     subtitleRow
-                }.previewDisplayName("Subtitle")
+                }.previewDisplayName("Standard Subtitle")
 
                 UIViewPreview {
                     valueRow
-                }.previewDisplayName("Value")
+                }.previewDisplayName("Standard Value")
             }
             .previewLayout(.fixed(width: 384, height: 44))
             .previewDisplayName("Standard")
@@ -281,15 +286,15 @@ struct OBAListRowView_Previews: PreviewProvider {
             Group {
                 UIViewPreview {
                     defaultRow
-                }.previewDisplayName("Default")
+                }.previewDisplayName("Accessibility Default")
 
                 UIViewPreview {
                     subtitleRow
-                }.previewDisplayName("Subtitle")
+                }.previewDisplayName("Accessibility Subtitle")
 
                 UIViewPreview {
                     valueRow
-                }.previewDisplayName("Value")
+                }.previewDisplayName("Accessibility Value")
             }
             .environment(\.sizeCategory, .accessibilityLarge)
             .previewLayout(.sizeThatFits)

@@ -85,6 +85,14 @@ struct OBAListRowViewHeader_Previews: PreviewProvider {
             }
             .environment(\.sizeCategory, .accessibilityLarge)
             .previewLayout(.sizeThatFits)
+
+            UIViewPreview {
+                let view = OBAListRowViewHeader(frame: .zero)
+                view.configuration = configuration
+                return view
+            }
+            .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
+            .previewLayout(.sizeThatFits)
         }
     }
 }
