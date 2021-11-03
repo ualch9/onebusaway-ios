@@ -13,6 +13,12 @@ struct BookmarksView: View {
     @ObservedObject var bookmarksDAO = BookmarksDataModel()
     @State var isEditingSections: Bool = false
 
+    public weak var delegate: BookmarksViewDelegate?
+
+    init(delegate: BookmarksViewDelegate? = nil) {
+        self.delegate = delegate
+    }
+
     var body: some View {
         List(bookmarksDAO.groups) { group in
             if isEditingSections {
@@ -45,8 +51,14 @@ struct BookmarksView: View {
             ForEach(group.bookmarks) { bookmark in
                 if case let BookmarkViewModel.stop(stop) = bookmark {
                     StopBookmarkView(viewModel: stop)
+                        .onTapGesture {
+                            self.delegate?.routeToStop(stopID: stop.id)
+                        }
                 } else if case let BookmarkViewModel.trip(trip) = bookmark {
                     TripBookmarkView(viewModel: trip)
+                        .onTapGesture {
+                            self.delegate?.routeToStop(stopID: trip.stopID)
+                        }
                 }
             }
         } header: {

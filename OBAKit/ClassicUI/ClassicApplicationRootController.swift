@@ -12,7 +12,7 @@ import OBAKitCore
 import SwiftUI
 
 @objc(OBAClassicApplicationRootController)
-public class ClassicApplicationRootController: UITabBarController {
+public class ClassicApplicationRootController: UITabBarController, BookmarksViewDelegate {
     public enum Page: Int {
         case map = 0
         case recentStops
@@ -27,18 +27,14 @@ public class ClassicApplicationRootController: UITabBarController {
 
         self.mapController = MapViewController(application: application)
         self.recentStopsController = RecentStopsViewController(application: application)
-        
-        let bookmarksView = BookmarksView()
-            .environment(\.coreApplication, application)
+        self.moreController = MoreViewController(application: application)
+
+        super.init(nibName: nil, bundle: nil)
+
         self.bookmarksController = UIHostingController(rootView: bookmarksView)
         self.bookmarksController.title = OBALoc("bookmarks_controller.title", value: "Bookmarks", comment: "Title of the Bookmarks tab")
         self.bookmarksController.tabBarItem.image = Icons.bookmarksTabIcon
         self.bookmarksController.tabBarItem.selectedImage = Icons.bookmarksSelectedTabIcon
-
-//        self.bookmarksController = BookmarksViewController(application: application)
-        self.moreController = MoreViewController(application: application)
-
-        super.init(nibName: nil, bundle: nil)
 
         self.application.viewRouter.rootController = self
 
@@ -54,7 +50,11 @@ public class ClassicApplicationRootController: UITabBarController {
 
     @objc public let mapController: MapViewController
     @objc public let recentStopsController: RecentStopsViewController
-    let bookmarksController: UIViewController
+    lazy var bookmarksView: some View = {
+        BookmarksView(delegate: self)
+            .environment(\.coreApplication, application)
+    }()
+    var bookmarksController: UIViewController!
     @objc public let moreController: MoreViewController
 
     required init?(coder aDecoder: NSCoder) {
@@ -80,5 +80,10 @@ public class ClassicApplicationRootController: UITabBarController {
     func navigate(to destination: Page) {
         navigationController?.popToViewController(self, animated: true)
         selectedIndex = destination.rawValue
+    }
+
+    // MARK: - BookmarkViewDelegate methods
+    public func routeToStop(stopID: Stop.ID) {
+        application.viewRouter.navigateTo(stopID: stopID, from: self.bookmarksController)
     }
 }
