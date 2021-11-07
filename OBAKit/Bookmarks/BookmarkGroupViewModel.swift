@@ -36,6 +36,10 @@ enum BookmarkViewModel: Identifiable, Equatable {
         }
     }
 
+    var itemProvider: NSItemProvider {
+        return NSItemProvider(item: self.id as NSString, typeIdentifier: "org.onebusaway.iphone.bookmark")
+    }
+
 //    var sortOrder: Int {
 //        switch self {
 //        case .stop(let model): return model.sortOrder

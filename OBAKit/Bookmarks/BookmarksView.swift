@@ -11,7 +11,8 @@ import OBAKitCore
 struct BookmarksView: View {
     @Environment(\.coreApplication) var application
     @ObservedObject var bookmarksDAO = BookmarksDataModel()
-    @State var isEditingSections: Bool = false
+
+    @State var isDisplayingEditSheet = false
 
     public weak var delegate: BookmarksViewDelegate?
 
@@ -21,24 +22,27 @@ struct BookmarksView: View {
 
     var body: some View {
         List(bookmarksDAO.groups) { group in
-            if isEditingSections {
-                editingBookmarks(for: group)
-            } else {
-                bookmarkSection(for: group)
-            }
+            bookmarkSection(for: group)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(OBALoc("bookmarks_controller.title", value: "Bookmarks", comment: "Title of the Bookmarks tab"))
         .listStyle(.plain)
+        .sheet(isPresented: $isDisplayingEditSheet, onDismiss: {
+            bookmarksDAO.reloadData()
+        }, content: {
+            EditBookmarksView(bookmarksDAO: bookmarksDAO)
+        })
         .toolbar {
-            Button {
-                bookmarksDAO.reloadData()
-            } label: {
-                Image(systemName: "arrow.clockwise")
+            ToolbarItemGroup(placement: .navigationBarLeading) {
+                Button("Edit", action: { isDisplayingEditSheet.toggle() })
             }
 
-            Button("Toggle edit") {
-                isEditingSections.toggle()
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    bookmarksDAO.reloadData()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
             }
         }
         .onAppear {
@@ -54,13 +58,20 @@ struct BookmarksView: View {
                         .onTapGesture {
                             self.delegate?.routeToStop(stopID: stop.id)
                         }
+                        .onDrag { bookmark.itemProvider }
+//                        .onDrag(bookmark.id as NSString, preview: Text(bookmark.name))
                 } else if case let BookmarkViewModel.trip(trip) = bookmark {
                     TripBookmarkView(viewModel: trip)
                         .onTapGesture {
                             self.delegate?.routeToStop(stopID: trip.stopID)
                         }
+                        .onDrag { bookmark.itemProvider }
+//                        .onDrag(bookmark.id as NSString, preview: Text(bookmark.name))
                 }
             }
+            .onInsert(of: ["org.onebusaway.iphone.bookmark"], perform: {
+                drop(bookmarkGroupID: group.id, at: $0, items: $1)
+            })
         } header: {
             Text(group.name)
                 .textCase(.uppercase)
@@ -69,13 +80,20 @@ struct BookmarksView: View {
         }
     }
 
-    func editingBookmarks(for group: BookmarkGroupViewModel) -> some View {
-        Text(group.name)
-            + Text(" (")
-            + Text("\(group.bookmarks.count)")
-            + Text(")")
-    }
+    private func drop(bookmarkGroupID: UUID, at index: Int, items: [NSItemProvider]) {
+        guard let item = items.first (where: { $0.hasItemConformingToTypeIdentifier("org.onebusaway.iphone.bookmark") }) else {
+            return
+        }
 
+        item.loadObject(ofClass: NSString.self) { reading, error in
+            guard let bookmarkToMoveID = reading as? NSString else { return }
+            DispatchQueue.main.async {
+                print("Bookmark to move: \(bookmarkToMoveID)")
+            }
+        }
+        print("\(bookmarkGroupID.uuidString) -- \(index) -- \(items)")
+        print("asdf!!")
+    }
 }
 
 //struct BookmarksView_Previews: PreviewProvider {
@@ -85,3 +103,12 @@ struct BookmarksView: View {
 //        }
 //    }
 //}
+
+struct BookmarksDropDelegate: DropDelegate {
+    @ObservedObject var bookmarksDAO: BookmarksDataModel
+
+    func performDrop(info: DropInfo) -> Bool {
+        let providers = info.itemProviders(for: ["org.onebusaway.iphone.bookmark"])
+        return false
+    }
+}
