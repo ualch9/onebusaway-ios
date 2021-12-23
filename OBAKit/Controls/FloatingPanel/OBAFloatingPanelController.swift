@@ -51,6 +51,42 @@ class OBAFloatingPanelController: FloatingPanelController {
         fatalError()
     }
 
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        switch traitCollection.userInterfaceIdiom {
+        case .pad:
+            surfaceView.appearance = appearanceForiPad()
+        default:
+            surfaceView.appearance = appearanceForPhone()
+        }
+    }
+
+    // MARK: - Appearance
+    func appearanceForPhone() -> SurfaceAppearance {
+        let appearance = SurfaceAppearance()
+        appearance.cornerCurve = .continuous
+        appearance.cornerRadius = 8.0
+        appearance.backgroundColor = .clear
+        return appearance
+    }
+
+    func appearanceForiPad() -> SurfaceAppearance {
+        let appearance = SurfaceAppearance()
+        appearance.cornerRadius = 8.0
+
+        let shadow = SurfaceAppearance.Shadow()
+        shadow.color = UIColor.black
+        shadow.offset = CGSize(width: 0, height: 16)
+        shadow.radius = 16
+        shadow.spread = 8
+        appearance.shadows = [shadow]
+        appearance.backgroundColor = .clear
+
+        return appearance
+    }
+
+    // MARK: - Accessibility
     func fullSheetVoiceoverAlert() -> UIAlertController {
         let title = OBALoc("floating_panel.controller.full_sheet_voiceover_change_alert.title", value: "Voiceover detected", comment: "")
         let message = OBALoc("floating_panel.controller.full_sheet_voiceover_change_alert.message", value: "The sheet will automatically expand when VoiceOver is turned on. To disable this behavior, visit the Settings page.", comment: "")

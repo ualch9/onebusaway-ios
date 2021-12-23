@@ -369,9 +369,6 @@ public class MapViewController: UIViewController,
         semiModalPanel?.removePanelFromParent(animated: false)
 
         let panel = FloatingPanelController()
-        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
-        panel.surfaceView.backgroundColor = .clear
-
         // Set a content view controller.
         panel.set(contentViewController: childController)
 
@@ -380,7 +377,6 @@ public class MapViewController: UIViewController,
         }
 
         panel.addPanel(toParent: self, animated: true)
-//        panel.addPanel(toParent: self, belowView: nil, animated: true)
 
         semiModalPanel = panel
     }
@@ -389,8 +385,6 @@ public class MapViewController: UIViewController,
     private lazy var floatingPanel: OBAFloatingPanelController = {
         let panel = OBAFloatingPanelController(application, delegate: self)
         panel.isRemovalInteractionEnabled = false
-        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
-        panel.surfaceView.backgroundColor = .clear
 
         // Set a content view controller.
         panel.set(contentViewController: mapPanelController)

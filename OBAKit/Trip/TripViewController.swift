@@ -206,7 +206,6 @@ class TripViewController: UIViewController,
     private lazy var floatingPanel: OBAFloatingPanelController = {
         let panel = OBAFloatingPanelController(application, delegate: self)
         panel.isRemovalInteractionEnabled = false
-        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
         panel.contentMode = .fitToBounds
 
         // Set a content view controller.
