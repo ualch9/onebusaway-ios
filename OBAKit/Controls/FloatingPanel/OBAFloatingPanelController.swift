@@ -63,7 +63,7 @@ class OBAFloatingPanelController: FloatingPanelController {
 
     private func updateAccessibilityValue() {
         let accessibilityValue: String?
-        switch self.position {
+        switch self.state {
         case .full:
             accessibilityValue = OBALoc("floating_panel.controller.position.full", value: "Full screen", comment: "A voiceover title describing that the card's visibility is taking up the full screen.")
         case .half:
@@ -72,14 +72,16 @@ class OBAFloatingPanelController: FloatingPanelController {
             accessibilityValue = OBALoc("floating_panel.controller.position.minimized", value: "Minimized", comment: "A voiceover title describing that the card's visibility taking up the minimum amount of screen.")
         case .hidden:
             accessibilityValue = nil
+        default:
+            accessibilityValue = nil
         }
 
         surfaceView.grabberHandle.accessibilityValue = accessibilityValue
     }
 
     @objc private func accessibilityActionExpandPanel() -> Bool {
-        let availableAnchors = self.layout.supportedPositions.sorted(by: \.rawValue)
-        guard let anchor = availableAnchors.firstIndex(of: self.position),
+        let availableAnchors = self.layout.anchors.map { $0.key }.sorted(by: \.rawValue)
+        guard let anchor = availableAnchors.firstIndex(of: self.state),
               anchor != 0       // Enum value of `0` is equivalent to `full`.
         else { return false }
 
@@ -91,8 +93,8 @@ class OBAFloatingPanelController: FloatingPanelController {
     }
 
     @objc private func accessibilityActionCollapsePanel() -> Bool {
-        let availableAnchors = self.layout.supportedPositions.sorted(by: \.rawValue)
-        guard let anchor = availableAnchors.firstIndex(of: self.position),
+        let availableAnchors = self.layout.anchors.map { $0.key }.sorted(by: \.rawValue)
+        guard let anchor = availableAnchors.firstIndex(of: self.state),
               anchor != availableAnchors.count - 1
         else { return false }
 
