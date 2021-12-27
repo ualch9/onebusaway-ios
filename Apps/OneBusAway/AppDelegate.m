@@ -10,10 +10,10 @@
 #import "AppDelegate.h"
 @import OBAKitCore;
 @import OBAKit;
-@import OneSignal;
+//@import OneSignal;
 #import <FirebaseCrashlytics/FirebaseCrashlytics.h>
 #import "OBAFirebaseAnalytics.h"
-#import "App-Swift.h"
+//#import "App-Swift.h"
 
 @interface AppDelegate ()<OBAApplicationDelegate>
 @property(nonatomic,strong) OBAApplication *app;
@@ -50,9 +50,9 @@
 
         OBAAppConfig *appConfig = [[OBAAppConfig alloc] initWithAppBundle:NSBundle.mainBundle userDefaults:_userDefaults analytics:_analyticsClient];
 
-        NSString *pushKey = NSBundle.mainBundle.infoDictionary[@"OBAKitConfig"][@"PushNotificationAPIKey"];
-        OBAOneSignalPushService *pushService = [[OBAOneSignalPushService alloc] initWithAPIKey:pushKey];
-        appConfig.pushServiceProvider = pushService;
+//        NSString *pushKey = NSBundle.mainBundle.infoDictionary[@"OBAKitConfig"][@"PushNotificationAPIKey"];
+//        OBAOneSignalPushService *pushService = [[OBAOneSignalPushService alloc] initWithAPIKey:pushKey];
+//        appConfig.pushServiceProvider = pushService;
 
         _app = [[OBAApplication alloc] initWithConfig:appConfig];
         _app.delegate = self;
@@ -135,7 +135,8 @@
 #pragma mark - Push Notifications
 
 - (BOOL)isRegisteredForRemoteNotifications {
-    return [OneSignal getDeviceState].notificationPermissionStatus == OSNotificationPermissionAuthorized;
+    return false;
+//    return [OneSignal getDeviceState].notificationPermissionStatus == OSNotificationPermissionAuthorized;
 }
 
 @end
