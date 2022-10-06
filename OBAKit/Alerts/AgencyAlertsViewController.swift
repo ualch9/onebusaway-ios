@@ -12,32 +12,30 @@ import OBAKitCore
 import SafariServices
 
 /// Displays `AgencyAlert` objects loaded from a Protobuf feed.
-class AgencyAlertsViewController: UIViewController,
-    AgencyAlertsDelegate,
-    AgencyAlertListViewConverters,
-    AppContext,
-    OBAListViewCollapsibleSectionsDelegate,
-    OBAListViewContextMenuDelegate,
-    OBAListViewDataSource {
+class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelegate, AgencyAlertListViewConverters, AppContext {
 
     // MARK: - Stores
     public let application: Application
     private let alertsStore: AgencyAlertsStore
 
-    // MARK: - UI state
-    let selectionFeedbackGenerator: UISelectionFeedbackGenerator? = UISelectionFeedbackGenerator()
-    var collapsedSections: Set<String> = []
+    /// A map of `UIViewController`s responsible for each `AgencyAlert`'s context menu preview.
+    fileprivate let previewingViewControllers: NSMapTable<NSString, UIViewController> = .strongToWeakObjects()
 
-    // MARK: - UI elements
-    let listView = OBAListView()
-    let refreshControl = UIRefreshControl()
+    // MARK: - Collection view
+    fileprivate var dataSource: UICollectionViewDiffableDataSource<String, AgencyAlert>!
+    fileprivate var sectionSupplementaryRegistration: UICollectionView.SupplementaryRegistration<UICollectionViewListCell>!
+    fileprivate var alertCellRegistration: UICollectionView.CellRegistration<UICollectionViewListCell, AgencyAlert>!
+
+    fileprivate let refreshControl = UIRefreshControl()
 
     // MARK: - Init
     public init(application: Application) {
         self.application = application
         self.alertsStore = application.alertsStore
 
-        super.init(nibName: nil, bundle: nil)
+        var config = UICollectionLayoutListConfiguration(appearance: .plain)
+        config.headerMode = .supplementary
+        super.init(collectionViewLayout: UICollectionViewCompositionalLayout.list(using: config))
 
         self.alertsStore.addDelegate(self)
 
@@ -54,24 +52,86 @@ class AgencyAlertsViewController: UIViewController,
 
         refreshControl.addTarget(self, action: #selector(reloadServerData), for: .valueChanged)
 
-        listView.obaDataSource = self
-        listView.collapsibleSectionsDelegate = self
-        listView.contextMenuDelegate = self
-        listView.refreshControl = refreshControl
-        view.addSubview(listView)
-        listView.pinToSuperview(.edges)
+        self.view.backgroundColor = ThemeColors.shared.systemBackground
 
-        view.backgroundColor = ThemeColors.shared.systemBackground
+        self.sectionSupplementaryRegistration = UICollectionView.SupplementaryRegistration(elementKind: UICollectionView.elementKindSectionHeader, handler: cellForHeader)
+        self.alertCellRegistration = UICollectionView.CellRegistration(handler: cellForAlert)
+        self.dataSource = UICollectionViewDiffableDataSource<String, AgencyAlert>(collectionView: self.collectionView, cellProvider: self.cellProvider)
+        self.dataSource.supplementaryViewProvider = self.supplementaryViewProvider
+
+        self.collectionView.refreshControl = refreshControl
+        self.collectionView.dataSource = self.dataSource
 
         reloadServerData()
+    }
+
+    // MARK: - Collection view providers
+
+    fileprivate func supplementaryViewProvider(_ collectionView: UICollectionView, elementKind: String, indexPath: IndexPath) -> UICollectionReusableView? {
+        guard elementKind == UICollectionView.elementKindSectionHeader else {
+            return nil
+        }
+
+        return collectionView.dequeueConfiguredReusableSupplementary(using: sectionSupplementaryRegistration, for: indexPath)
+    }
+
+    fileprivate func cellForHeader(_ cell: UICollectionViewListCell, kind: String, indexPath: IndexPath) {
+        guard kind == UICollectionView.elementKindSectionHeader else { return }
+
+        let section = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
+
+        var content = UIListContentConfiguration.plainHeader()
+        content.text = section
+        content.textProperties.font = .preferredFont(forTextStyle: .headline)
+        content.textProperties.transform = .uppercase
+
+        cell.contentConfiguration = content
+    }
+
+    fileprivate func cellForAlert(_ cell: UICollectionViewListCell, indexPath: IndexPath, agencyAlert: AgencyAlert) {
+        var content = cell.defaultContentConfiguration()
+        content.text = agencyAlert.title(forLocale: .current)
+        content.secondaryText = agencyAlert.body(forLocale: .current)
+        content.secondaryTextProperties.numberOfLines = 3
+
+        cell.contentConfiguration = content
+        cell.accessories = [.disclosureIndicator()]
+    }
+
+    func cellProvider(_ collectionView: UICollectionView, _ indexPath: IndexPath, _ agencyAlert: AgencyAlert) -> UICollectionViewCell? {
+        return collectionView.dequeueConfiguredReusableCell(using: self.alertCellRegistration, for: indexPath, item: agencyAlert)
     }
 
     // MARK: - Agency Alerts Delegate
 
     func agencyAlertsUpdated() {
-        listView.applyData(animated: false)
+        self.alertsDidUpdate()
         refreshControl.endRefreshing()
         navigationItem.rightBarButtonItem = nil
+    }
+
+    var localSnapshot: [String: [AgencyAlert]] = [:]
+
+    func alertsDidUpdate() {
+        let alerts = alertsStore.agencyAlerts
+
+        localSnapshot.removeAll(keepingCapacity: true)
+        for alert in alerts {
+            let agencyName = alert.agency?.agency.name ?? ""
+
+            var value: [AgencyAlert] = localSnapshot[agencyName] ?? []
+            value.append(alert)
+            localSnapshot.updateValue(value, forKey: agencyName)
+        }
+
+        var snapshot = NSDiffableDataSourceSnapshot<String, AgencyAlert>()
+        snapshot.appendSections(Array(localSnapshot.keys))
+
+        for (key, value) in localSnapshot {
+            snapshot.appendItems(value, toSection: key)
+        }
+
+        self.dataSource.apply(snapshot)
     }
 
     // MARK: - Data Loading
@@ -79,61 +139,63 @@ class AgencyAlertsViewController: UIViewController,
     @objc private func reloadServerData() {
         alertsStore.checkForUpdates()
         refreshControl.beginRefreshing()
-        navigationItem.rightBarButtonItem = UIActivityIndicatorView.asNavigationItem()
     }
 
-    func contextMenu(_ listView: OBAListView, for item: AnyOBAListViewItem) -> OBAListViewMenuActions? {
-        guard let alert = item.as(TransitAlertDataListViewModel.self) else { return nil }
+    override func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
+        let section = self.dataSource.snapshot().sectionIdentifiers[indexPaths[0].section]
+        let alert = self.dataSource.snapshot().itemIdentifiers(inSection: section)[indexPaths[0].row]
 
-        let preview: OBAListViewMenuActions.PreviewProvider = {
-            return self.previewAlert(alert)
+        return UIContextMenuConfiguration(identifier: menuIdentifier(for: alert)) { [self] in
+            return previewViewController(for: alert)
+        } actionProvider: { [self] _ in
+            return menu(for: alert)
         }
-
-        let performPreview: VoidBlock = {
-            self.performPreviewActionAlert(alert)
-        }
-
-        let menuProvider: OBAListViewMenuActions.MenuProvider = { _ in
-            return UIMenu(title: "", image: nil, identifier: nil, options: [], children: [self.shareAlertAction(alert)])
-        }
-
-        return OBAListViewMenuActions(previewProvider: preview, performPreviewAction: performPreview, contextMenuProvider: menuProvider)
     }
 
-    // MARK: - Preview
+    fileprivate func menuIdentifier(for alert: AgencyAlert) -> NSString {
+        return alert.id as NSString
+    }
 
-    var previewingVC: (identifier: String, vc: UIViewController)?
+    override func collectionView(_ collectionView: UICollectionView, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
+        guard let previewingVC = previewingViewControllers.object(forKey: configuration.identifier as? NSString) else {
+            return
+        }
 
-    func previewAlert(_ alert: TransitAlertDataListViewModel) -> UIViewController? {
+        if previewingVC is TransitAlertDetailViewController {
+            animator.addAnimations {
+                self.application.viewRouter.navigate(to: previewingVC, from: self)
+            }
+        } else {
+            animator.addAnimations {
+                self.application.viewRouter.present(previewingVC, from: self, isModal: true)
+            }
+        }
+    }
+
+    // MARK: - Context Menu
+
+    fileprivate func previewViewController(for alert: AgencyAlert) -> UIViewController? {
         let viewController: UIViewController
-        if let url = alert.localizedURL {
+        if let url = alert.url(forLocale: .current) {
             viewController = SFSafariViewController(url: url)
         } else {
-            viewController = TransitAlertDetailViewController(alert.transitAlert)
+            viewController = TransitAlertDetailViewController(alert)
         }
 
-        self.previewingVC = (alert.id, viewController)
+        self.previewingViewControllers.setObject(viewController, forKey: menuIdentifier(for: alert))
         return viewController
     }
 
-    func performPreviewActionAlert(_ alert: TransitAlertDataListViewModel) {
-        if let previewingVC = self.previewingVC, previewingVC.identifier == alert.id {
-            if previewingVC.vc is TransitAlertDetailViewController {
-                application.viewRouter.navigate(to: previewingVC.vc, from: self)
-            } else {
-                application.viewRouter.present(previewingVC.vc, from: self, isModal: true)
-            }
-        } else {
-            presentAlert(alert)
-        }
+    fileprivate func menu(for alert: AgencyAlert) -> UIMenu? {
+        return UIMenu(children: [shareAlertAction(alert)])
     }
 
     // MARK: - Menu actions
     /// Returns a UIAction that presents a `UIActivityViewController` for sharing the URL
     /// (or title and body, if no URL) of the provided alert.
-    func shareAlertAction(_ alert: TransitAlertDataListViewModel) -> UIAction {
+    func shareAlertAction(_ alert: AgencyAlert) -> UIAction {
         let activityItems: [Any]
-        if let url = alert.localizedURL {
+        if let url = alert.url(forLocale: .current) {
             activityItems = [url]
         } else {
             activityItems = [alert.title, alert.body]
@@ -147,12 +209,9 @@ class AgencyAlertsViewController: UIViewController,
 
     // MARK: - List data
 
-    func items(for listView: OBAListView) -> [OBAListViewSection] {
-        return listSections(agencyAlerts: alertsStore.agencyAlerts)
-    }
-
-    func emptyData(for listView: OBAListView) -> OBAListView.EmptyData? {
-        let regionName = application.currentRegion?.name
-        return .standard(.init(title: Strings.emptyAlertTitle, body: regionName))
-    }
+    // FIXME: empty data!
+//    func emptyData(for listView: OBAListView) -> OBAListView.EmptyData? {
+//        let regionName = application.currentRegion?.name
+//        return .standard(.init(title: Strings.emptyAlertTitle, body: regionName))
+//    }
 }
