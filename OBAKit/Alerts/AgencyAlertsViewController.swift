@@ -142,8 +142,13 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
     }
 
     override func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
-        let section = self.dataSource.snapshot().sectionIdentifiers[indexPaths[0].section]
-        let alert = self.dataSource.snapshot().itemIdentifiers(inSection: section)[indexPaths[0].row]
+        guard let indexPath = indexPaths.first else {
+            // If there is no index path, then the section header is calling this method.
+            return nil
+        }
+
+        let section = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
+        let alert = self.dataSource.snapshot().itemIdentifiers(inSection: section)[indexPath.row]
 
         return UIContextMenuConfiguration(identifier: menuIdentifier(for: alert)) { [self] in
             return previewViewController(for: alert)
