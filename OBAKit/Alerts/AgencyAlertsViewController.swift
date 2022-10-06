@@ -98,7 +98,7 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
         cell.accessories = [.disclosureIndicator()]
     }
 
-    func cellProvider(_ collectionView: UICollectionView, _ indexPath: IndexPath, _ agencyAlert: AgencyAlert) -> UICollectionViewCell? {
+    fileprivate func cellProvider(_ collectionView: UICollectionView, _ indexPath: IndexPath, _ agencyAlert: AgencyAlert) -> UICollectionViewCell? {
         return collectionView.dequeueConfiguredReusableCell(using: self.alertCellRegistration, for: indexPath, item: agencyAlert)
     }
 
@@ -147,18 +147,15 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
             return nil
         }
 
-        let section = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
-        let alert = self.dataSource.snapshot().itemIdentifiers(inSection: section)[indexPath.row]
+        guard let alert = self.dataSource.itemIdentifier(for: indexPath) else {
+            return nil
+        }
 
         return UIContextMenuConfiguration(identifier: menuIdentifier(for: alert)) { [self] in
             return previewViewController(for: alert)
         } actionProvider: { [self] _ in
             return menu(for: alert)
         }
-    }
-
-    fileprivate func menuIdentifier(for alert: AgencyAlert) -> NSString {
-        return alert.id as NSString
     }
 
     override func collectionView(_ collectionView: UICollectionView, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
@@ -177,16 +174,29 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
         }
     }
 
-    // MARK: - Context Menu
-
-    fileprivate func previewViewController(for alert: AgencyAlert) -> UIViewController? {
-        let viewController: UIViewController
-        if let url = alert.url(forLocale: .current) {
-            viewController = SFSafariViewController(url: url)
-        } else {
-            viewController = TransitAlertDetailViewController(alert)
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let alert = self.dataSource.itemIdentifier(for: indexPath) else {
+            return
         }
 
+        self.application.viewRouter.navigateTo(alert: alert, from: self)
+    }
+
+    func viewController(for alert: AgencyAlert) -> UIViewController {
+        if let url = alert.url(forLocale: .current) {
+            return SFSafariViewController(url: url)
+        } else {
+            return TransitAlertDetailViewController(alert)
+        }
+    }
+
+    // MARK: - Context Menu
+    fileprivate func menuIdentifier(for alert: AgencyAlert) -> NSString {
+        return alert.id as NSString
+    }
+
+    fileprivate func previewViewController(for alert: AgencyAlert) -> UIViewController? {
+        let viewController = viewController(for: alert)
         self.previewingViewControllers.setObject(viewController, forKey: menuIdentifier(for: alert))
         return viewController
     }
