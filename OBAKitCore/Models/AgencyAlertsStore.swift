@@ -164,18 +164,27 @@ public class AgencyAlertsStore: NSObject, RegionsServiceDelegate {
     }
 
     // MARK: - Data Storage
-
+    private var alerts: Set<AgencyAlert> = []           // All of the alerts, uniqued by the set.
+    private var _agencyAlertsNeedsToUpdate = false      // Whether the sorted alerts (`_agencyAlerts`) is stale and need updating.
+    private var _agencyAlerts: [AgencyAlert] = []       // Sorted alerts.
     public var agencyAlerts: [AgencyAlert] {
-        alerts.allObjects.sorted { ($0.startDate ?? Date.distantPast) > ($1.startDate ?? Date.distantPast) }
-    }
+        if _agencyAlertsNeedsToUpdate {
+            _agencyAlerts.removeAll(keepingCapacity: true)
+            _agencyAlerts = alerts.allObjects.sorted {
+                ($0.startDate ?? Date.distantPast) > ($1.startDate ?? Date.distantPast)
+            }
+            _agencyAlertsNeedsToUpdate = false
+        }
 
-    private var alerts: Set<AgencyAlert> = []
+        return _agencyAlerts
+    }
 
     private func storeAgencyAlerts(_ agencyAlerts: [AgencyAlert]) {
         for alert in agencyAlerts {
             self.alerts.insert(alert)
         }
 
+        self._agencyAlertsNeedsToUpdate = true
         self.notifyDelegatesAlertsUpdated()
     }
 
