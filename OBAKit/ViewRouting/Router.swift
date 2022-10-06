@@ -8,6 +8,7 @@
 //
 
 import UIKit
+import SwiftUI
 import OBAKitCore
 import SafariServices
 
@@ -103,16 +104,13 @@ public class ViewRouter: NSObject, UINavigationControllerDelegate {
         rootController.navigate(to: page)
     }
 
+    public func viewController(for alert: TransitAlertViewModel, locale: Locale = .current) -> UIViewController {
+        return UIHostingController(rootView: TransitAlertDetailView(viewModel: .fromAlert(alert, locale: locale)))
+    }
+
     public func navigateTo(alert: TransitAlertViewModel, locale: Locale = .current, from fromController: UIViewController) {
         guard shouldNavigate(from: fromController, to: .transitAlert(alert)) else { return }
-
-        if let url = alert.url(forLocale: locale) {
-            let safari = SFSafariViewController(url: url)
-            present(safari, from: fromController, isModal: true)
-        } else {
-            let view = TransitAlertDetailViewController(alert)
-            present(view, from: fromController)
-        }
+        navigate(to: viewController(for: alert, locale: locale), from: fromController)
     }
 
     // MARK: - Helpers

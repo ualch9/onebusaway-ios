@@ -7,6 +7,13 @@
 
 /// Wraps `AgencyAlert` and `ServiceAlert` into a common view model for displaying alert details in-app.
 public protocol TransitAlertViewModel {
+    var id: String { get }
+
+    var affectedAgencyName: String? { get }
+
+    var startDate: Date? { get }
+    var endDate: Date? { get }
+
     /// The closest matching localized title text for the specified `Locale`.
     func title(forLocale locale: Locale) -> String?
 
@@ -18,16 +25,34 @@ public protocol TransitAlertViewModel {
 }
 
 extension AgencyAlert: TransitAlertViewModel {
-    // nop. already conforms to transitalertdata.
+    public var affectedAgencyName: String? {
+        return self.agency?.agency.name
+    }
 }
 
 extension ServiceAlert: TransitAlertViewModel {
+    public var affectedAgencyName: String? {
+        return affectedAgencies.map { $0.name }.sorted().joined(separator: ", ")
+    }
+
+    fileprivate var closestActiveWindow: TimeWindow? {
+        return self.activeWindows.allObjects.sorted(by: \.from).first
+    }
+
+    public var startDate: Date? {
+        return closestActiveWindow?.from
+    }
+
+    public var endDate: Date? {
+        return closestActiveWindow?.to
+    }
+
     public func title(forLocale locale: Locale) -> String? {
         return summary?.value
     }
 
     public func body(forLocale locale: Locale) -> String? {
-        return affectedAgencies.map { $0.name }.sorted().joined(separator: ", ")
+        return affectedAgencyName
     }
 
     public func url(forLocale locale: Locale) -> URL? {

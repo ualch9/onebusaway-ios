@@ -8,6 +8,7 @@
 //
 
 import UIKit
+import SwiftUI
 import OBAKitCore
 import SafariServices
 
@@ -163,14 +164,8 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
             return
         }
 
-        if previewingVC is TransitAlertDetailViewController {
-            animator.addAnimations {
-                self.application.viewRouter.navigate(to: previewingVC, from: self)
-            }
-        } else {
-            animator.addAnimations {
-                self.application.viewRouter.present(previewingVC, from: self, isModal: true)
-            }
+        animator.addAnimations {
+            self.application.viewRouter.navigate(to: previewingVC, from: self)
         }
     }
 
@@ -182,21 +177,13 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
         self.application.viewRouter.navigateTo(alert: alert, from: self)
     }
 
-    func viewController(for alert: AgencyAlert) -> UIViewController {
-        if let url = alert.url(forLocale: .current) {
-            return SFSafariViewController(url: url)
-        } else {
-            return TransitAlertDetailViewController(alert)
-        }
-    }
-
     // MARK: - Context Menu
     fileprivate func menuIdentifier(for alert: AgencyAlert) -> NSString {
         return alert.id as NSString
     }
 
     fileprivate func previewViewController(for alert: AgencyAlert) -> UIViewController? {
-        let viewController = viewController(for: alert)
+        let viewController = self.application.viewRouter.viewController(for: alert)
         self.previewingViewControllers.setObject(viewController, forKey: menuIdentifier(for: alert))
         return viewController
     }
