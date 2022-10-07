@@ -45,39 +45,6 @@ struct TransitAlertDetailView: View {
 
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
-    func keyValue(_ key: String, _ value: String?) -> some View {
-        Group {
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading) {
-                    Text(key)
-                        .font(.headline)
-
-                    if let value {
-                        Text(value)
-                    } else {
-                        Text("Not available")
-                            .foregroundColor(.secondary)
-                            .italic()
-                    }
-                }
-            } else {
-                 HStack {
-                    Text(key)
-                        .font(.headline)
-                    Spacer()
-
-                    if let value {
-                        Text(value)
-                    } else {
-                        Text("Not available")
-                            .foregroundColor(.secondary)
-                            .italic()
-                    }
-                }
-            }
-        }
-    }
-
     var body: some View {
         List {
             Section {
@@ -98,13 +65,13 @@ struct TransitAlertDetailView: View {
             }
 
             Section {
-                keyValue("Alert ID", viewModel.id)
-                keyValue("Agency", viewModel.agency)
+                KeyValueView(key: "Alert ID", value: viewModel.id)
+                KeyValueView(key: "Agency", value: viewModel.agency)
             }
 
             Section("Effective") {
-                keyValue("Start", viewModel.startDate?.formatted())
-                keyValue("End", viewModel.endDate?.formatted())
+                KeyValueView(key: "Start", value: viewModel.startDate?.formatted())
+                KeyValueView(key: "End", value: viewModel.endDate?.formatted())
             }
         }
         .navigationTitle("Agency Alert")
