@@ -15,6 +15,40 @@ import SafariServices
 /// Displays `AgencyAlert` objects loaded from a Protobuf feed.
 class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelegate, AgencyAlertListViewConverters, AppContext {
 
+    struct ViewModel: Hashable {
+        var id: String
+        var title: String
+        var subtitle: String?
+        var isHeader: Bool
+
+        init(headerWithTitle title: String) {
+            self.id = "\(title)"
+            self.title = title
+            self.subtitle = nil
+            self.isHeader = true
+        }
+
+        init(_ alert: AgencyAlert) {
+            self.id = alert.id
+            self.title = alert.title(forLocale: .current) ?? ""
+            self.subtitle = alert.body(forLocale: .current)
+            self.isHeader = false
+        }
+
+        var contentConfiguration: UIListContentConfiguration {
+            var config: UIListContentConfiguration = isHeader ? .plainHeader() : .cell()
+            config.text = title
+            config.secondaryText = subtitle
+            config.secondaryTextProperties.numberOfLines = 3
+
+            if isHeader {
+                config.textProperties.font = .preferredFont(forTextStyle: .headline)
+            }
+
+            return config
+        }
+    }
+
     // MARK: - Stores
     public let application: Application
     private let alertsStore: AgencyAlertsStore
@@ -23,9 +57,9 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
     fileprivate let previewingViewControllers: NSMapTable<NSString, UIViewController> = .strongToWeakObjects()
 
     // MARK: - Collection view
-    fileprivate var dataSource: UICollectionViewDiffableDataSource<String, AgencyAlert>!
-    fileprivate var sectionSupplementaryRegistration: UICollectionView.SupplementaryRegistration<UICollectionViewListCell>!
-    fileprivate var alertCellRegistration: UICollectionView.CellRegistration<UICollectionViewListCell, AgencyAlert>!
+    fileprivate var dataSource: UICollectionViewDiffableDataSource<String, ViewModel>!
+    fileprivate var headerCellRegistration: UICollectionView.CellRegistration<UICollectionViewListCell, ViewModel>!
+    fileprivate var alertCellRegistration: UICollectionView.CellRegistration<UICollectionViewListCell, ViewModel>!
 
     fileprivate let refreshControl = UIRefreshControl()
 
@@ -34,8 +68,8 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
         self.application = application
         self.alertsStore = application.alertsStore
 
-        var config = UICollectionLayoutListConfiguration(appearance: .plain)
-        config.headerMode = .supplementary
+        var config = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
+        config.headerMode = .firstItemInSection
         super.init(collectionViewLayout: UICollectionViewCompositionalLayout.list(using: config))
 
         self.alertsStore.addDelegate(self)
@@ -55,52 +89,64 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
 
         self.view.backgroundColor = ThemeColors.shared.systemBackground
 
-        self.sectionSupplementaryRegistration = UICollectionView.SupplementaryRegistration(elementKind: UICollectionView.elementKindSectionHeader, handler: cellForHeader)
+        self.headerCellRegistration = UICollectionView.CellRegistration(handler: cellForHeader)
         self.alertCellRegistration = UICollectionView.CellRegistration(handler: cellForAlert)
-        self.dataSource = UICollectionViewDiffableDataSource<String, AgencyAlert>(collectionView: self.collectionView, cellProvider: self.cellProvider)
-        self.dataSource.supplementaryViewProvider = self.supplementaryViewProvider
+        self.dataSource = UICollectionViewDiffableDataSource<String, ViewModel>(collectionView: self.collectionView, cellProvider: self.cellProvider)
+        self.dataSource.reorderingHandlers.canReorderItem = { itemIdentifier in
+            return self.isEditing && itemIdentifier.isHeader
+        }
 
         self.collectionView.refreshControl = refreshControl
         self.collectionView.dataSource = self.dataSource
 
+        self.navigationItem.rightBarButtonItem = self.editButtonItem
+
         reloadServerData()
+    }
+
+    override func setEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+
+        let sections = self.dataSource.snapshot().sectionIdentifiers
+
+        for section in sections {
+            var sectionSnapshot = self.dataSource.snapshot(for: section)
+            if editing {
+                sectionSnapshot.collapse(sectionSnapshot.rootItems)
+                self.dataSource.apply(sectionSnapshot, to: section, animatingDifferences: true)
+            } else {
+                sectionSnapshot.expand(sectionSnapshot.rootItems)
+                self.dataSource.apply(sectionSnapshot, to: section, animatingDifferences: true)
+            }
+        }
+    }
+
+    // MARK: - Actions
+    @objc func didSelectFilterButton(_ sender: Any?) {
+        let vc = AgencyAlertsFilterViewController(application: application, allAgencies: self.dataSource.snapshot().sectionIdentifiers)
+        self.navigationController?.pushViewController(vc, animated: true)
     }
 
     // MARK: - Collection view providers
 
-    fileprivate func supplementaryViewProvider(_ collectionView: UICollectionView, elementKind: String, indexPath: IndexPath) -> UICollectionReusableView? {
-        guard elementKind == UICollectionView.elementKindSectionHeader else {
-            return nil
-        }
-
-        return collectionView.dequeueConfiguredReusableSupplementary(using: sectionSupplementaryRegistration, for: indexPath)
+    fileprivate func cellForHeader(_ cell: UICollectionViewListCell, _ indexPath: IndexPath, _ item: ViewModel) {
+        var config = item.contentConfiguration
+        config.textProperties.transform = .uppercase
+        cell.contentConfiguration = config
+        cell.accessories = [.reorder(displayed: .whenEditing)]
     }
 
-    fileprivate func cellForHeader(_ cell: UICollectionViewListCell, kind: String, indexPath: IndexPath) {
-        guard kind == UICollectionView.elementKindSectionHeader else { return }
-
-        let section = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
-
-        var content = UIListContentConfiguration.plainHeader()
-        content.text = section
-        content.textProperties.font = .preferredFont(forTextStyle: .headline)
-        content.textProperties.transform = .uppercase
-
-        cell.contentConfiguration = content
-    }
-
-    fileprivate func cellForAlert(_ cell: UICollectionViewListCell, indexPath: IndexPath, agencyAlert: AgencyAlert) {
-        var content = cell.defaultContentConfiguration()
-        content.text = agencyAlert.title(forLocale: .current)
-        content.secondaryText = agencyAlert.body(forLocale: .current)
-        content.secondaryTextProperties.numberOfLines = 3
-
-        cell.contentConfiguration = content
+    fileprivate func cellForAlert(_ cell: UICollectionViewListCell, _ indexPath: IndexPath, _ item: ViewModel) {
+        cell.contentConfiguration = item.contentConfiguration
         cell.accessories = [.disclosureIndicator()]
     }
 
-    fileprivate func cellProvider(_ collectionView: UICollectionView, _ indexPath: IndexPath, _ agencyAlert: AgencyAlert) -> UICollectionViewCell? {
-        return collectionView.dequeueConfiguredReusableCell(using: self.alertCellRegistration, for: indexPath, item: agencyAlert)
+    fileprivate func cellProvider(_ collectionView: UICollectionView, _ indexPath: IndexPath, _ item: ViewModel) -> UICollectionViewCell? {
+        if item.isHeader {
+            return collectionView.dequeueConfiguredReusableCell(using: headerCellRegistration, for: indexPath, item: item)
+        } else {
+            return collectionView.dequeueConfiguredReusableCell(using: alertCellRegistration, for: indexPath, item: item)
+        }
     }
 
     // MARK: - Agency Alerts Delegate
@@ -108,7 +154,6 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
     func agencyAlertsUpdated() {
         self.alertsDidUpdate()
         refreshControl.endRefreshing()
-        navigationItem.rightBarButtonItem = nil
     }
 
     var localSnapshot: [String: [AgencyAlert]] = [:]
@@ -125,14 +170,20 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
             localSnapshot.updateValue(value, forKey: agencyName)
         }
 
-        var snapshot = NSDiffableDataSourceSnapshot<String, AgencyAlert>()
-        snapshot.appendSections(Array(localSnapshot.keys))
+        var snapshot = NSDiffableDataSourceSnapshot<String, ViewModel>()
+
+        snapshot.appendSections(Array(localSnapshot.keys).sorted())
 
         for (key, value) in localSnapshot {
-            snapshot.appendItems(value, toSection: key)
-        }
+            let header = ViewModel(headerWithTitle: key)
+            let items = value.map(ViewModel.init)
 
-        self.dataSource.apply(snapshot)
+            var sectionSnapshot = NSDiffableDataSourceSectionSnapshot<ViewModel>()
+            sectionSnapshot.append([header])
+            sectionSnapshot.append(items, to: header)
+            sectionSnapshot.expand([header])
+            dataSource.apply(sectionSnapshot, to: key)
+        }
     }
 
     // MARK: - Data Loading
@@ -143,20 +194,21 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
     }
 
     override func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
-        guard let indexPath = indexPaths.first else {
-            // If there is no index path, then the section header is calling this method.
-            return nil
-        }
-
-        guard let alert = self.dataSource.itemIdentifier(for: indexPath) else {
-            return nil
-        }
-
-        return UIContextMenuConfiguration(identifier: menuIdentifier(for: alert)) { [self] in
-            return previewViewController(for: alert)
-        } actionProvider: { [self] _ in
-            return menu(for: alert)
-        }
+//        guard let indexPath = indexPaths.first else {
+//            // If there is no index path, then the section header is calling this method.
+//            return nil
+//        }
+//
+//        guard let alert = self.dataSource.itemIdentifier(for: indexPath) else {
+//            return nil
+//        }
+//
+//        return UIContextMenuConfiguration(identifier: menuIdentifier(for: alert)) { [self] in
+//            return previewViewController(for: alert)
+//        } actionProvider: { [self] _ in
+//            return menu(for: alert)
+//        }
+        return nil
     }
 
     override func collectionView(_ collectionView: UICollectionView, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
@@ -174,7 +226,7 @@ class AgencyAlertsViewController: UICollectionViewController, AgencyAlertsDelega
             return
         }
 
-        self.application.viewRouter.navigateTo(alert: alert, from: self)
+//        self.application.viewRouter.navigateTo(alert: alert, from: self)
     }
 
     // MARK: - Context Menu
