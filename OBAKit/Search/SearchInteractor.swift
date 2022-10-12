@@ -7,6 +7,7 @@
 //  LICENSE file in the root directory of this source tree.
 //
 
+import Combine
 import Foundation
 import OBAKitCore
 
@@ -31,6 +32,13 @@ class SearchInteractor: NSObject {
 
     private let userDataStore: UserDataStore
     public weak var delegate: SearchDelegate?
+
+//    @Published var recentStops: [MapPanelItem] = []
+//    @Published var bookmarks: [MapPanelItem] = []
+
+//    func updateData() {
+//        let recentStopsData = userDataStore.findRecentStops(matching: searchText)
+//    }
 
     /// Creates a new `SearchInteractor`
     /// - Parameter userDataStore: A concrete object that conforms to the `UserDataStore` protocol

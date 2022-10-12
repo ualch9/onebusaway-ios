@@ -139,7 +139,7 @@ public class RecentStopsViewController: UIViewController,
                 self.listView.applyData(animated: true)
             }
 
-            return StopViewModel(withStop: stop, onSelect: onSelect, onDelete: onDelete)
+            return StopViewModel(stop, onSelect: onSelect, onDelete: onDelete)
         }.uniqued
 
         let title = application.userDataStore.alarms.count > 0 ? Strings.recentStops : nil

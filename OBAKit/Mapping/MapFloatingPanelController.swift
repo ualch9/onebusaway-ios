@@ -208,7 +208,7 @@ class MapFloatingPanelController: VisualEffectViewController,
                     self.mapPanelDelegate?.mapPanelController(self, didSelectStop: viewModel.id)
                 }
 
-                return StopViewModel(withStop: stop, onSelect: onSelect, onDelete: nil)
+                return StopViewModel(stop, onSelect: onSelect, onDelete: nil)
             }
 
             let section = OBAListViewSection(id: "nearby_stops", title: OBALoc("nearby_stops_controller.title", value: "Nearby Stops", comment: "The title of the Nearby Stops controller."), contents: rows)

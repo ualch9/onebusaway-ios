@@ -54,7 +54,7 @@ struct TransitAlertDetailView: View {
                 }
 
                 Text(viewModel.body)
-                    .italic(!viewModel.isBodyAvailable)
+//                    .italic(!viewModel.isBodyAvailable)
                     .foregroundColor(viewModel.isBodyAvailable ? .primary : .secondary)
 
                 if let url = viewModel.url {

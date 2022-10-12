@@ -36,10 +36,10 @@ struct StopViewModel: OBAListViewItem {
     let onSelectAction: OBAListViewAction<StopViewModel>?
     let onDeleteAction: OBAListViewAction<StopViewModel>?
 
-    init(withStop stop: Stop,
+    init(_ stop: Stop,
          showDirectionInTitle: Bool = false,
-         onSelect selectAction: OBAListViewAction<StopViewModel>?,
-         onDelete deleteAction: OBAListViewAction<StopViewModel>?) {
+         onSelect selectAction: OBAListViewAction<StopViewModel>? = nil,
+         onDelete deleteAction: OBAListViewAction<StopViewModel>? = nil) {
 
         self.name = showDirectionInTitle ? stop.nameWithLocalizedDirectionAbbreviation : stop.name
         self.subtitle = stop.subtitle
@@ -48,6 +48,16 @@ struct StopViewModel: OBAListViewItem {
         self.id = stop.id
         self.onSelectAction = selectAction
         self.onDeleteAction = deleteAction
+    }
+
+    init(id: Stop.ID = UUID().uuidString, name: String, subtitle: String? = nil, routeType: Route.RouteType) {
+        self.id = id
+        self.name = name
+        self.subtitle = subtitle
+        self.routeType = routeType
+
+        self.onSelectAction = nil
+        self.onDeleteAction = nil
     }
 
     func hash(into hasher: inout Hasher) {

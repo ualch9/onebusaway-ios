@@ -125,7 +125,7 @@ class NearbyStopsViewController: OperationController<DecodableOperation<RESTAPIR
 
         return directions.sorted(by: \.key).map { (direction, _) -> OBAListViewSection in
             let stops = directions[direction] ?? []
-            let cells = stops.map { StopViewModel(withStop: $0, showDirectionInTitle: false, onSelect: tapHandler, onDelete: nil) }
+            let cells = stops.map { StopViewModel($0, showDirectionInTitle: false, onSelect: tapHandler, onDelete: nil) }
             let header = Formatters.adjectiveFormOfCardinalDirection(direction) ?? ""
             return OBAListViewSection(id: "\(direction.rawValue)", title: header, contents: cells)
         }

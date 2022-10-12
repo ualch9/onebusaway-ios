@@ -9,6 +9,7 @@
 
 import UIKit
 import MapKit
+import SwiftUI
 import FloatingPanel
 import OBAKitCore
 
@@ -21,7 +22,7 @@ public class MapViewController: UIViewController,
     MapRegionDelegate,
     MapRegionMapViewDelegate,
     ModalDelegate,
-    MapPanelDelegate,
+    MapPanelDelegate, MapPanelViewDelegate,
     UIContextMenuInteractionDelegate,
     UILargeContentViewerInteractionDelegate {
 
@@ -50,6 +51,8 @@ public class MapViewController: UIViewController,
 
     let application: Application
 
+    var panelProvider = OBAMapPanelProvider()
+
     var mapRegionManager: MapRegionManager {
         return application.mapRegionManager
     }
@@ -67,6 +70,7 @@ public class MapViewController: UIViewController,
 
         // Assign delegates
         self.application.mapRegionManager.addDelegate(self)
+        self.application.mapRegionManager.addDelegate(panelProvider)
         self.application.locationService.addDelegate(self)
 
         self.application.notificationCenter.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
@@ -392,10 +396,14 @@ public class MapViewController: UIViewController,
         panel.surfaceView.backgroundColor = .clear
 
         // Set a content view controller.
-        panel.set(contentViewController: mapPanelController)
+//        panel.set(contentViewController: mapPanelController)
+        let host = UIHostingController(
+            rootView: MapPanelView(provider: self.panelProvider, delegate: self)
+        )
+        panel.set(contentViewController: host)
 
         // Track a scroll view (or the siblings) in the content view controller.
-        panel.track(scrollView: mapPanelController.listView)
+//        panel.track(scrollView: mapPanelController.listView)
 
         return panel
     }()
@@ -405,24 +413,24 @@ public class MapViewController: UIViewController,
         case .regular:
             return MapPanelLandscapeLayout(initialPosition: .half)
         default:
-            return MapPanelLayout(initialPosition: .tip)
+            return MapPanelLayout(initialPosition: .half)
         }
     }
 
     public func floatingPanelDidChangePosition(_ vc: FloatingPanel.FloatingPanelController) {
         // Don't allow the status overlay to be shown when the
         // Floating Panel is fully open because it looks weird.
-        let floatingPanelPositionIsCollapsed = vc.position == .tip || vc.position == .hidden
-        statusOverlay.isHidden = vc.position == .full
-        mapPanelController.listView.accessibilityElementsHidden = floatingPanelPositionIsCollapsed
-
-        // Disables voiceover interacting with map elements (such as streets and POIs).
-        // See #431.
-        mapRegionManager.mapView.accessibilityElementsHidden = !floatingPanelPositionIsCollapsed
-
-        if mapPanelController.inSearchMode && floatingPanelPositionIsCollapsed {
-            mapPanelController.exitSearchMode()
-        }
+//        let floatingPanelPositionIsCollapsed = vc.position == .tip || vc.position == .hidden
+//        statusOverlay.isHidden = vc.position == .full
+//        mapPanelController.listView.accessibilityElementsHidden = floatingPanelPositionIsCollapsed
+//
+//        // Disables voiceover interacting with map elements (such as streets and POIs).
+//        // See #431.
+//        mapRegionManager.mapView.accessibilityElementsHidden = !floatingPanelPositionIsCollapsed
+//
+//        if mapPanelController.inSearchMode && floatingPanelPositionIsCollapsed {
+//            mapPanelController.exitSearchMode()
+//        }
     }
 
     func updateVoiceover() {
@@ -456,7 +464,15 @@ public class MapViewController: UIViewController,
 
     // MARK: - Map Panel Controller
 
-    private lazy var mapPanelController = MapFloatingPanelController(application: application, mapRegionManager: application.mapRegionManager, delegate: self)
+//    private lazy var mapPanelController = MapFloatingPanelController(application: application, mapRegionManager: application.mapRegionManager, delegate: self)
+
+    func didSelect(stop stopID: Stop.ID) {
+        application.viewRouter.navigateTo(stopID: stopID, from: self)
+    }
+
+    func didSelect(alert alertID: String) {
+//        application.viewRouter.
+    }
 
     func mapPanelController(_ controller: MapFloatingPanelController, didSelectStop stopID: Stop.ID) {
         application.viewRouter.navigateTo(stopID: stopID, from: self)
@@ -590,7 +606,7 @@ public class MapViewController: UIViewController,
     }
 
     public func mapRegionManagerDismissSearch(_ manager: MapRegionManager) {
-        mapPanelController.exitSearchMode()
+//        mapPanelController.exitSearchMode()
     }
 
     // MARK: - LocationServiceDelegate
