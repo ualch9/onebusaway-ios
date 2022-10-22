@@ -69,6 +69,17 @@ struct StopViewModel: OBAListViewItem {
     }
 }
 
+#if DEBUG
+extension StopViewModel {
+    static let samples: [StopViewModel] = [
+        .init(name: "3rd Ave & 500th Place or something", routeType: .bus),
+        .init(name: "4th Ave & 501st Place or something", routeType: .ferry),
+        .init(name: "5th Ave & 500th Place or something", routeType: .rail),
+        .init(name: "6th Ave & 500th Place or something", routeType: .lightRail)
+    ]
+}
+#endif
+
 extension RecentStopsViewController {
     struct AlarmViewModel: OBAListViewItem {
         let alarm: Alarm

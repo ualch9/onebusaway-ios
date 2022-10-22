@@ -8,6 +8,7 @@
 //
 
 import UIKit
+import SwiftUI
 import OBAKitCore
 
 /// Static accessors for icons available in the framework.
@@ -216,6 +217,17 @@ class Icons: NSObject {
         case .bus: return busTransport
         case .ferry: return ferryTransport
         default: return busTransport
+        }
+    }
+
+    public class func transportSymbol(_ routeType: Route.RouteType) -> Image {
+        switch routeType {
+        case .lightRail:    return Image(systemName: "tram.fill")
+        case .subway:       return Image(systemName: "tram.fill.tunnel")
+        case .rail:         return Image(systemName: "train.side.front.car")
+        case .bus:          return Image(systemName: "bus.fill")
+        case .ferry:        return Image(systemName: "ferry.fill")
+        default:            return Image(systemName: "bus.fill")
         }
     }
 

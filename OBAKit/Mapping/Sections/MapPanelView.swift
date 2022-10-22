@@ -11,37 +11,13 @@ import OBAKitCore
 protocol MapPanelViewDelegate: AnyObject {
     func didSelect(alert alertID: String)
     func didSelect(stop stopID: Stop.ID)
+    func didSelect(bookmark bookmarkID: Bookmark.ID)
 }
 
 protocol MapPanelViewProvider: ObservableObject {
-    var alerts: [AgencyAlertViewModel] { get set }
+    var alerts: [MapPanelAlertView.Item] { get set }
     var nearbyStops: [StopViewModel] { get set }
     var recentStops: [StopViewModel] { get set }
-    var bookmarks: [StopViewModel] { get set }
-}
-
-struct AgencyAlertViewModel: Identifiable, Hashable {
-    let id: MapPanelViewIdentifier
-    let title: String
-    let agencyName: String?
-
-    init(id: String = UUID().uuidString, title: String, agencyName: String?) {
-        self.id = .alert(id)
-        self.title = title
-        self.agencyName = agencyName
-    }
-
-    init(_ agencyAlert: AgencyAlert) {
-        self.id = .alert(agencyAlert.id)
-        self.title = agencyAlert.title(forLocale: .current) ?? ""
-        self.agencyName = agencyAlert.affectedAgencyName
-    }
-}
-
-extension StopViewModel {
-    var panelViewIdentifier: MapPanelViewIdentifier {
-        return .stop(id)
-    }
 }
 
 enum MapPanelViewIdentifier: Hashable {
@@ -59,19 +35,19 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
         List(selection: $selectedItem) {
             if provider.alerts.isEmpty == false {
                 Section("Agency Alerts") {
-                    ForEach(provider.alerts, id: \.id, content: AgencyAlertView.init)
+                    ForEach(provider.alerts, id: \.id, content: MapPanelAlertView.init)
                 }
             }
 
             Section("Recent Stops") {
-                ForEach(provider.recentStops, id: \.panelViewIdentifier, content: StopView.init)
+                ForEach(provider.recentStops, id: \.panelViewIdentifier, content: MapPanelStopView.init)
             }
 
             Section("Nearby Stops") {
-                ForEach(provider.nearbyStops, id: \.panelViewIdentifier, content: StopView.init)
+                ForEach(provider.nearbyStops, id: \.panelViewIdentifier, content: MapPanelStopView.init)
             }
         }
-        
+        .listStyle(.inset)
         .onAppear {
             self.selectedItem = nil
         }
@@ -93,63 +69,11 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
     }
 }
 
-extension MapPanelView {
-    struct StopView: View {
-        @State var stop: StopViewModel
-
-        var body: some View {
-            HStack {
-                Image(uiImage: Icons.transportIcon(from: stop.routeType))
-                    .resizable()
-                    .frame(maxWidth: 18, maxHeight: 18)
-                    .foregroundColor(Color.primary)
-                VStack(alignment: .leading) {
-                    Text(stop.name)
-                    if let subtitle = stop.subtitle {
-                        Text(subtitle)
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.forward")
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-
-    struct AgencyAlertView: View {
-        @State var alert: AgencyAlertViewModel
-
-        var body: some View {
-            HStack(alignment: .center) {
-                Image(systemName: "exclamationmark.circle")
-
-                VStack(alignment: .leading) {
-                    Text(alert.title)
-                    if let agency = alert.agencyName {
-                        Text(agency)
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                }
-            }
-        }
-    }
-}
-
 struct MapPanelView_Previews: PreviewProvider {
     fileprivate class Previews_DebugProvider: MapPanelViewProvider {
-        @Published var nearbyStops: [StopViewModel] = [
-            .init(name: "3rd Ave & 500th Place or something", routeType: .bus),
-            .init(name: "4th Ave & 501st Place or something", routeType: .ferry),
-            .init(name: "5th Ave & 500th Place or something", routeType: .rail),
-            .init(name: "6th Ave & 500th Place or something", routeType: .lightRail)
-        ]
-
-        @Published var recentStops: [StopViewModel] = []
-        @Published var alerts: [AgencyAlertViewModel] = []
-        @Published var bookmarks: [StopViewModel] = []
+        @Published var nearbyStops: [StopViewModel] = StopViewModel.samples
+        @Published var recentStops: [StopViewModel] = StopViewModel.samples.reversed()
+        @Published var alerts: [MapPanelAlertView.Item] = MapPanelAlertView.Item.samples
     }
 
     fileprivate static var provider = Previews_DebugProvider()

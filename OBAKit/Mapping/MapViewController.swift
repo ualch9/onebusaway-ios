@@ -413,7 +413,7 @@ public class MapViewController: UIViewController,
         case .regular:
             return MapPanelLandscapeLayout(initialPosition: .half)
         default:
-            return MapPanelLayout(initialPosition: .half)
+            return MapPanelLayout(initialPosition: .full)
         }
     }
 
@@ -472,6 +472,10 @@ public class MapViewController: UIViewController,
 
     func didSelect(alert alertID: String) {
 //        application.viewRouter.
+    }
+
+    func didSelect(bookmark bookmarkID: Bookmark.ID) {
+        print("asdf")
     }
 
     func mapPanelController(_ controller: MapFloatingPanelController, didSelectStop stopID: Stop.ID) {
