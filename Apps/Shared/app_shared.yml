@@ -15,7 +15,7 @@ options:
   generateEmptyDirectories: true
   groupSortPosition: top
   deploymentTarget:
-    iOS: "14.5"
+    iOS: "15.0"
 
 ############
 # App
@@ -93,7 +93,7 @@ packages:
         exactVersion: 5.3.3
     FloatingPanel:
         url: https://github.com/SCENEE/FloatingPanel.git
-        exactVersion: 1.7.6
+        exactVersion: 2.5.5
     Hyperconnectivity:
         url: https://github.com/rwbutler/Hyperconnectivity.git
         exactVersion: 1.1.0
@@ -101,7 +101,7 @@ packages:
         url: https://github.com/cbpowell/MarqueeLabel.git
         exactVersion: 4.0.5
     OneSignal:
-        url: https://github.com/OneSignal/OneSignal-iOS-SDK.git
+        url:  https://github.com/OneSignal/OneSignal-XCFramework
         minorVersion: 3.5.3
     SwiftProtobuf:
         url: https://github.com/apple/swift-protobuf.git

@@ -204,9 +204,9 @@ class TripViewController: UIViewController,
 
     /// The floating panel controller, which displays a drawer at the bottom of the map.
     private lazy var floatingPanel: OBAFloatingPanelController = {
-        let panel = OBAFloatingPanelController(application, delegate: self)
+        let panel = OBAFloatingPanelController(self.application, delegate: self)
         panel.isRemovalInteractionEnabled = false
-        panel.surfaceView.cornerRadius = ThemeMetrics.cornerRadius
+        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
         panel.contentMode = .fitToBounds
 
         // Set a content view controller.
@@ -215,13 +215,13 @@ class TripViewController: UIViewController,
         return panel
     }()
 
-    public func floatingPanel(_ vc: FloatingPanelController, layoutFor newCollection: UITraitCollection) -> FloatingPanelLayout? {
+    public func floatingPanel(_ vc: FloatingPanelController, layoutFor newCollection: UITraitCollection) -> FloatingPanelLayout {
         let layout: FloatingPanelLayout
         switch newCollection.horizontalSizeClass {
         case .regular:
-            layout = MapPanelLandscapeLayout(initialPosition: .tip)
+            layout = MapPanelLandscapeLayout(initialState: .tip)
         default:
-            layout = MapPanelLayout(initialPosition: .tip)
+            layout = FloatingPanelBottomLayout()
         }
 
         return layout
@@ -237,21 +237,22 @@ class TripViewController: UIViewController,
         showTripDetails = true
     }
 
-    func floatingPanelDidChangePosition(_ vc: FloatingPanel.FloatingPanelController) {
-        showTripDetails = vc.position != .tip
-        tripDetailsController.configureView(for: vc.position)
+    func floatingPanelDidChangeState(_ fpc: FloatingPanelController) {
+        showTripDetails = fpc.state != .tip
+        tripDetailsController.configureView(for: fpc.state)
 
         guard !isBeingPreviewed else { return }
 
         // We don't need to set the map view's margins if the drawer will take up the whole screen.
-        if vc.position != .full {
-            if traitCollection.horizontalSizeClass == .regular {
-                mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: MapPanelLandscapeLayout.WidthSize + ThemeMetrics.padding, bottom: 0, trailing: 0)
-            } else {
-                let drawerHeight = vc.layout.insetFor(position: vc.position) ?? 0
-                mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: drawerHeight, trailing: 0)
-            }
-        }
+//        if fpc.state != .full {
+//            if traitCollection.horizontalSizeClass == .regular {
+//                mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: MapPanelLandscapeLayout.WidthSize + ThemeMetrics.padding, bottom: 0, trailing: 0)
+//            } else {
+//                fpc.layout.
+//                let drawerHeight = vc.layout.insetFor(position: vc.position) ?? 0
+//                mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: drawerHeight, trailing: 0)
+//            }
+//        }
     }
 
     func showStopOnMap(_ tripStop: TripStopViewModel) {

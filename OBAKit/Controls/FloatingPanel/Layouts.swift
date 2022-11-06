@@ -12,22 +12,16 @@ import UIKit
 
 /// A layout object used with `FloatingPanel` on `MapViewController`.
 final class MapPanelLayout: NSObject, FloatingPanelLayout {
-    init(initialPosition: FloatingPanelPosition) {
-        self.initialPosition = initialPosition
-    }
+    var position: FloatingPanelPosition = .top
+    var initialState: FloatingPanelState
+    let anchors: [FloatingPanelState: FloatingPanel.FloatingPanelLayoutAnchoring] = [
+        .tip: FloatingPanelLayoutAnchor(absoluteInset: 60, edge: .top, referenceGuide: .safeArea),
+        .half: FloatingPanelLayoutAnchor(absoluteInset: 250, edge: .top, referenceGuide: .safeArea),
+        .full: FloatingPanelLayoutAnchor(fractionalInset: 1, edge: .top, referenceGuide: .safeArea)
+    ]
 
-    func insetFor(position: FloatingPanelPosition) -> CGFloat? {
-        switch position {
-        case .tip: return 60.0
-        case .half: return 250.0
-        default: return nil
-        }
-    }
-
-    var initialPosition: FloatingPanelPosition
-
-    var supportedPositions: Set<FloatingPanelPosition> {
-        [.tip, .half, .full]
+    init(initialState: FloatingPanelState = .tip) {
+        self.initialState = initialState
     }
 }
 
@@ -35,23 +29,16 @@ final class MapPanelLayout: NSObject, FloatingPanelLayout {
 final class MapPanelLandscapeLayout: FloatingPanelLayout {
     static let WidthSize: CGFloat = 291
 
-    init(initialPosition: FloatingPanelPosition) {
-        self.initialPosition = initialPosition
-    }
+    var position: FloatingPanelPosition = .bottom
+    var initialState: FloatingPanelState
+    let anchors: [FloatingPanelState: FloatingPanel.FloatingPanelLayoutAnchoring] = [
+        .tip: FloatingPanelLayoutAnchor(absoluteInset: 69, edge: .top, referenceGuide: .safeArea),
+        .half: FloatingPanelLayoutAnchor(absoluteInset: 250, edge: .top, referenceGuide: .safeArea),
+        .full: FloatingPanelLayoutAnchor(fractionalInset: 1, edge: .top, referenceGuide: .safeArea)
+    ]
 
-    var initialPosition: FloatingPanelPosition
-
-    public var supportedPositions: Set<FloatingPanelPosition> {
-        return [.full, .half, .tip]
-    }
-
-    public func insetFor(position: FloatingPanelPosition) -> CGFloat? {
-        switch position {
-        case .full: return 16.0
-        case .half: return 250.0
-        case .tip: return 69.0
-        default: return nil
-        }
+    init(initialState: FloatingPanelState = .tip) {
+        self.initialState = initialState
     }
 
     public func prepareLayout(surfaceView: UIView, in view: UIView) -> [NSLayoutConstraint] {
@@ -61,7 +48,7 @@ final class MapPanelLandscapeLayout: FloatingPanelLayout {
         ]
     }
 
-    public func backdropAlphaFor(position: FloatingPanelPosition) -> CGFloat {
+    public func backdropAlpha(for state: FloatingPanelState) -> CGFloat {
         return 0.0
     }
 }

@@ -16,7 +16,7 @@ import OBAKitCore
 /// Displays a map, a set of stops rendered as annotation views, and the user's location if authorized.
 ///
 /// `MapViewController` is the average user's primary means of interacting with OneBusAway data.
-public class MapViewController: UIViewController,
+class MapViewController: UIViewController,
     FloatingPanelControllerDelegate,
     LocationServiceDelegate,
     MapRegionDelegate,
@@ -186,7 +186,7 @@ public class MapViewController: UIViewController,
 
         // It is possible to activate the center map button via Voiceover. When the user
         // centers the map on their location, partially collapse the sheet to enable mapview interaction.
-        if floatingPanel.position == .full {
+        if floatingPanel.state == .full {
             floatingPanel.move(to: .half, animated: true)
         }
     }
@@ -353,16 +353,16 @@ public class MapViewController: UIViewController,
     /// Sets the margins for the map view to keep the scale and legal info within the viewable area.
     /// Call this when you modify top level UI.
     func layoutMapMargins() {
-        let panelViewHeight = floatingPanel.layout.insetFor(position: .tip) ?? 0
-
-        let top = mapStatusView.frame.height - view.safeAreaInsets.top
-        let bottom = panelViewHeight + ThemeMetrics.compactPadding
-
-        if traitCollection.horizontalSizeClass == .regular {
-            self.mapRegionManager.mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: top, leading: MapPanelLandscapeLayout.WidthSize + ThemeMetrics.padding, bottom: 0, trailing: 0)
-        } else {
-            self.mapRegionManager.mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: top, leading: 0, bottom: bottom, trailing: 0)
-        }
+//        let panelViewHeight = floatingPanel.layout.anchors[.tip]. ?? 0
+//
+//        let top = mapStatusView.frame.height - view.safeAreaInsets.top
+//        let bottom = panelViewHeight + ThemeMetrics.compactPadding
+//
+//        if traitCollection.horizontalSizeClass == .regular {
+//            self.mapRegionManager.mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: top, leading: MapPanelLandscapeLayout.WidthSize + ThemeMetrics.padding, bottom: 0, trailing: 0)
+//        } else {
+//            self.mapRegionManager.mapView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: top, leading: 0, bottom: bottom, trailing: 0)
+//        }
     }
 
     // MARK: - Floating Panel Controller
@@ -373,7 +373,7 @@ public class MapViewController: UIViewController,
         semiModalPanel?.removePanelFromParent(animated: false)
 
         let panel = FloatingPanelController()
-        panel.surfaceView.cornerRadius = ThemeMetrics.cornerRadius
+        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
         panel.surfaceView.backgroundColor = .clear
 
         // Set a content view controller.
@@ -383,7 +383,7 @@ public class MapViewController: UIViewController,
             panel.track(scrollView: (childController as! Scrollable).scrollView) // swiftlint:disable:this force_cast
         }
 
-        panel.addPanel(toParent: self, belowView: nil, animated: true)
+        panel.addPanel(toParent: self, animated: true)
 
         semiModalPanel = panel
     }
@@ -392,7 +392,7 @@ public class MapViewController: UIViewController,
     private lazy var floatingPanel: OBAFloatingPanelController = {
         let panel = OBAFloatingPanelController(application, delegate: self)
         panel.isRemovalInteractionEnabled = false
-        panel.surfaceView.cornerRadius = ThemeMetrics.cornerRadius
+        panel.surfaceView.layer.cornerRadius = ThemeMetrics.cornerRadius
         panel.surfaceView.backgroundColor = .clear
 
         // Set a content view controller.
@@ -408,12 +408,12 @@ public class MapViewController: UIViewController,
         return panel
     }()
 
-    public func floatingPanel(_ vc: FloatingPanelController, layoutFor newCollection: UITraitCollection) -> FloatingPanelLayout? {
+    public func floatingPanel(_ vc: FloatingPanelController, layoutFor newCollection: UITraitCollection) -> FloatingPanelLayout {
         switch newCollection.horizontalSizeClass {
         case .regular:
-            return MapPanelLandscapeLayout(initialPosition: .half)
+            return MapPanelLandscapeLayout(initialState: .half)
         default:
-            return MapPanelLayout(initialPosition: .full)
+            return FloatingPanelBottomLayout()
         }
     }
 
@@ -451,7 +451,7 @@ public class MapViewController: UIViewController,
     public func dismissModalController(_ controller: UIViewController) {
         if controller == semiModalPanel?.contentViewController {
             if statusOverlay.isHidden {
-                statusOverlay.isHidden = floatingPanel.position != .full
+                statusOverlay.isHidden = floatingPanel.state != .full
             }
 
             mapRegionManager.cancelSearch()
@@ -486,7 +486,7 @@ public class MapViewController: UIViewController,
         floatingPanel.move(to: .full, animated: true)
     }
 
-    func mapPanelController(_ controller: MapFloatingPanelController, moveTo position: FloatingPanelPosition, animated: Bool) {
+    func mapPanelController(_ controller: MapFloatingPanelController, moveTo position: FloatingPanel.FloatingPanelState, animated: Bool) {
         floatingPanel.move(to: position, animated: animated)
     }
 

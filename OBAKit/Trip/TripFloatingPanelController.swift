@@ -132,7 +132,7 @@ class TripFloatingPanelController: UIViewController,
         }
     }
 
-    public func configureView(for drawerPosition: FloatingPanelPosition) {
+    public func configureView(for drawerPosition: FloatingPanelState) {
         switch drawerPosition {
         case .tip:
             self.separatorView.isHidden = true
@@ -148,7 +148,7 @@ class TripFloatingPanelController: UIViewController,
             self.stopArrivalView.normalInfoStack.forEach { $0.isHidden = isAccessibility }
             self.stopArrivalView.accessibilityInfoStack.forEach { $0.isHidden = !isAccessibility }
         case .hidden: fallthrough
-        @unknown default: break
+        default: break
         }
     }
 

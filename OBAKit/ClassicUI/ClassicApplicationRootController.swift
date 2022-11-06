@@ -43,7 +43,7 @@ public class ClassicApplicationRootController: UITabBarController {
         selectedIndex = application.userDataStore.lastSelectedView.rawValue
     }
 
-    @objc public let mapController: MapViewController
+    @objc let mapController: MapViewController
     @objc public let recentStopsController: RecentStopsViewController
     @objc public let bookmarksController: BookmarksViewController
     @objc public let moreController: MoreViewController
