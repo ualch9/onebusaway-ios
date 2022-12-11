@@ -34,20 +34,26 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
     var body: some View {
         List(selection: $selectedItem) {
             if provider.alerts.isEmpty == false {
-                Section("Agency Alerts") {
+                Section {
                     ForEach(provider.alerts, id: \.id, content: MapPanelAlertView.init)
+                } header: {
+                    listHeader("Agency Alerts")
                 }
             }
 
-            Section("Recent Stops") {
+            Section {
                 ForEach(provider.recentStops, id: \.panelViewIdentifier, content: MapPanelStopView.init)
+            } header: {
+                listHeader("Recent Stops")
             }
 
-            Section("Nearby Stops") {
+            Section {
                 ForEach(provider.nearbyStops, id: \.panelViewIdentifier, content: MapPanelStopView.init)
+            } header: {
+                listHeader("Nearby Stops")
             }
         }
-        .listStyle(.inset)
+        .listStyle(.insetGrouped)
         .onAppear {
             self.selectedItem = nil
         }
@@ -62,6 +68,12 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
                 delegate.didSelect(alert: id)
             }
         }
+    }
+
+    @ViewBuilder
+    fileprivate func listHeader(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.headline))
     }
 }
 

@@ -14,14 +14,16 @@ struct MapPanelStopView: View {
         HStack {
             Image(uiImage: Icons.transportIcon(from: stop.routeType))
                 .resizable()
-                .frame(maxWidth: 18, maxHeight: 18)
+                .frame(maxWidth: 24, maxHeight: 24)
                 .foregroundColor(Color.primary)
+                .padding(.trailing, 4)
             VStack(alignment: .leading) {
                 Text(stop.name)
                     .font(.headline)
                 if let subtitle = stop.subtitle {
                     Text(subtitle)
                         .font(.caption)
+                        .lineLimit(3)
                 }
             }
 
