@@ -9,9 +9,9 @@ import SwiftUI
 import OBAKitCore
 
 protocol MapPanelViewDelegate: AnyObject {
-    func didSelect(alert alertID: String)
-    func didSelect(stop stopID: Stop.ID)
-    func didSelect(bookmark bookmarkID: Bookmark.ID)
+    @MainActor func didSelect(alert alertID: String)
+    @MainActor func didSelect(stop stopID: Stop.ID)
+    @MainActor func didSelect(bookmark bookmarkID: Bookmark.ID)
 }
 
 protocol MapPanelViewProvider: ObservableObject {
@@ -57,13 +57,9 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
 
             switch selectedItem {
             case .stop(let id):
-                await MainActor.run {
-                    delegate.didSelect(stop: id)
-                }
+                delegate.didSelect(stop: id)
             case .alert(let id):
-                await MainActor.run {
-                    delegate.didSelect(alert: id)
-                }
+                delegate.didSelect(alert: id)
             }
         }
     }

@@ -466,14 +466,17 @@ class MapViewController: UIViewController,
 
 //    private lazy var mapPanelController = MapFloatingPanelController(application: application, mapRegionManager: application.mapRegionManager, delegate: self)
 
+    @MainActor
     func didSelect(stop stopID: Stop.ID) {
         application.viewRouter.navigateTo(stopID: stopID, from: self)
     }
 
+    @MainActor
     func didSelect(alert alertID: String) {
 //        application.viewRouter.
     }
 
+    @MainActor
     func didSelect(bookmark bookmarkID: Bookmark.ID) {
         print("asdf")
     }
