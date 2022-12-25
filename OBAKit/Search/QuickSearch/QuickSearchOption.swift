@@ -30,13 +30,3 @@ protocol QuickSearchOption {
     init(application: Application)
     func performSearch(query: String) async throws -> any QuickSearchResults
 }
-
-struct IdentifableQuickSearchOption<Option: QuickSearchOption>: Identifiable {
-    let id: String
-    let type: Option.Type
-
-    init(_ id: String, _ type: Option.Type) {
-        self.id = id
-        self.type = type
-    }
-}
