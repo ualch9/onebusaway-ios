@@ -63,6 +63,126 @@ public class SearchResponse: NSObject {
 
 // MARK: - SearchManager
 
+actor SearchManagerr {
+    enum Errors: Error {
+        case badState
+    }
+
+    private let application: Application
+
+    init(application: Application) {
+        self.application = application
+    }
+
+    func search(request: SearchRequest) async throws -> SearchResponse {
+        guard let apiService = application.restAPIService,
+              let mapRect = application.mapRegionManager.lastVisibleMapRect else {
+            throw Errors.badState
+        }
+
+        return try await searchAddress(request: request, apiService: apiService, mapRect: mapRect)
+    }
+
+    private func searchAddress(request: SearchRequest, apiService: RESTAPIService, mapRect: MKMapRect) async throws -> SearchResponse {
+        let response: SearchResponse = try await withCheckedThrowingContinuation { continuation in
+            let operation = apiService.getPlacemarks(query: request.query, region: MKCoordinateRegion(mapRect))
+            operation.completionBlock = {
+                if let error = operation.error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: SearchResponse(request: request, results: operation.response?.mapItems ?? [MKMapItem](), boundingRegion: operation.response?.boundingRegion, error: nil))
+                }
+            }
+        }
+
+        return response
+    }
+
+    private func searchRoute(request: SearchRequest, apiService: RESTAPIService, mapRect: MKMapRect) async throws -> SearchResponse {
+        return try await withCheckedThrowingContinuation { continuation in
+            let operation = apiService.getRoute(query: request.query, region: CLCircularRegion(mapRect: mapRect))
+            operation.complete { result in
+                if let error = operation.error {
+                    continuation.resume(throwing: error)
+                }
+
+                switch result {
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                case .success(let response):
+                    continuation.resume(returning: SearchResponse(request: request, results: response.list, boundingRegion: nil, error: nil))
+                }
+            }
+        }
+    }
+
+    private func searchStopNumber(request: SearchRequest, apiService: RESTAPIService, mapRect: MKMapRect) async throws -> SearchResponse {
+        return try await withCheckedThrowingContinuation { continuation in
+            let region = CLCircularRegion(mapRect: application.regionsService.currentRegion!.serviceRect)
+            let operation = apiService.getStops(circularRegion: region, query: request.query)
+            operation.complete { result in
+                if let error = operation.error {
+                    continuation.resume(throwing: error)
+                }
+
+                switch result {
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                case .success(let response):
+                    continuation.resume(returning: SearchResponse(request: request, results: response.list, boundingRegion: nil, error: nil))
+                }
+            }
+        }
+    }
+
+    private func searchVehicleID(request: SearchRequest, apiService: RESTAPIService, mapRect: MKMapRect) async throws -> SearchResponse {
+        guard let obacoService = application.obacoService else {
+            throw Errors.badState
+        }
+
+        let vehicles: [AgencyVehicle] = try await withCheckedThrowingContinuation { continuation in
+            let operation = obacoService.getVehicles(matching: request.query)
+            operation.complete { result in
+                if let error = operation.error {
+                    continuation.resume(throwing: error)
+                }
+
+                continuation.resume(with: result)
+            }
+        }
+
+        return try await processSearchResult(apiService: apiService, request: request, matchingVehicles: vehicles)
+    }
+
+    private func processSearchResult(apiService: RESTAPIService, request: SearchRequest, matchingVehicles: [AgencyVehicle]) async throws -> SearchResponse {
+        guard let firstMatchingVehicle = matchingVehicles.first else {
+            // No results
+            return SearchResponse(request: request, results: [], boundingRegion: nil, error: nil)
+        }
+
+        if matchingVehicles.count == 1, let vehicleID = firstMatchingVehicle.vehicleID {
+            return try await withCheckedThrowingContinuation { continuation in
+                let operation = apiService.getVehicle(vehicleID)
+                operation.complete { result in
+                    if let error = operation.error {
+                        continuation.resume(throwing: error)
+                    }
+
+                    switch result {
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    case .success(let response):
+                        continuation.resume(returning: SearchResponse(request: request, results: [response.entry], boundingRegion: nil, error: nil))
+                    }
+                }
+            }
+        }
+
+        return SearchResponse(request: request, results: matchingVehicles, boundingRegion: nil, error: nil)
+    }
+}
+
+@available(*, deprecated, renamed: "SearchManagerr")
 public class SearchManager: NSObject {
     private let application: Application
 

@@ -33,17 +33,6 @@ struct MapPanelView<ProviderType: MapPanelViewProvider>: View {
     @State fileprivate var selectedItem: MapPanelViewIdentifier?
 
     var body: some View {
-        VStack {
-            TextField("asdf", text: .constant("asdf"))
-                .padding([.leading, .trailing], 16)
-                .textFieldStyle(.roundedBorder)
-                .focused($focusedOnTextField)
-
-            stops
-        }
-    }
-
-    var stops: some View {
         List(selection: $selectedItem) {
             if provider.alerts.isEmpty == false {
                 Section {
