@@ -10,16 +10,20 @@ import Foundation
 import OBAKitCore
 
 class MapSearchViewController: UIViewController, UISearchControllerDelegate, UISearchBarDelegate {
-    let coordinator = MapPanelSearchProvider(nil)
-    private var standardView: UIHostingController<Text>!
+
+    private let standardProvider = OBAMapPanelProvider()
+    private var standardView: UIHostingController<MapPanelView>!
+
+    private let searchProvider = MapPanelSearchProvider(nil)
     private var searchView: UIHostingController<MapPanelSearchView>!
+
     private var searchController: UISearchController!
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.standardView = UIHostingController(rootView: Text("Standard view"))
-        self.searchView = UIHostingController(rootView: MapPanelSearchView(provider: coordinator))
+        self.standardView = UIHostingController(rootView: MapPanelView(provider: standardProvider))
+        self.searchView = UIHostingController(rootView: MapPanelSearchView(provider: searchProvider))
 
         self.searchController = UISearchController(searchResultsController: searchView)
         self.searchController.delegate = self
@@ -38,7 +42,7 @@ class MapSearchViewController: UIViewController, UISearchControllerDelegate, UIS
 
     // MARK: - UISearchBarDelegate methods
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        coordinator.searchQuery = searchText
+        searchProvider.searchQuery = searchText
     }
 }
 
