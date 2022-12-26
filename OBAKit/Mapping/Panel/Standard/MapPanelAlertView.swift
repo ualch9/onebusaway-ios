@@ -10,7 +10,7 @@ import OBAKitCore
 
 struct MapPanelAlertView: View {
     struct Item: Identifiable, Hashable {
-        let id: MapPanelViewIdentifier
+        let id: MapPanelItemIdentifier
         let title: String
         let agencyName: String?
 

@@ -1,5 +1,5 @@
 //
-//  MapSearchViewController.swift
+//  MapPanelController.swift
 //  OBAKit
 //
 //  Created by Alan Chu on 12/25/22.
@@ -9,10 +9,10 @@ import SwiftUI
 import Foundation
 import OBAKitCore
 
-class MapSearchViewController: UIViewController, UISearchControllerDelegate, UISearchBarDelegate {
+class MapPanelController: UIViewController, UISearchControllerDelegate, UISearchBarDelegate {
 
     private let standardProvider = OBAMapPanelProvider()
-    private var standardView: UIHostingController<MapPanelView>!
+    private var standardView: UIHostingController<MapPanelStandardView>!
 
     private let searchProvider = MapPanelSearchProvider(nil)
     private var searchView: UIHostingController<MapPanelSearchView>!
@@ -22,7 +22,7 @@ class MapSearchViewController: UIViewController, UISearchControllerDelegate, UIS
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.standardView = UIHostingController(rootView: MapPanelView(provider: standardProvider))
+        self.standardView = UIHostingController(rootView: MapPanelStandardView(provider: standardProvider))
         self.searchView = UIHostingController(rootView: MapPanelSearchView(provider: searchProvider))
 
         self.searchController = UISearchController(searchResultsController: searchView)
@@ -49,7 +49,7 @@ class MapSearchViewController: UIViewController, UISearchControllerDelegate, UIS
 struct MapSearchViewControllerPreviews: PreviewProvider {
     static var previews: some View {
         UIViewControllerPreview {
-            UINavigationController(rootViewController: MapSearchViewController())
+            UINavigationController(rootViewController: MapPanelController())
         }
     }
 }

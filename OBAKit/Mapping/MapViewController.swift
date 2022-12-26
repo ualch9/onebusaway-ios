@@ -22,7 +22,7 @@ class MapViewController: UIViewController,
     MapRegionDelegate,
     MapRegionMapViewDelegate,
     ModalDelegate,
-    MapPanelDelegate, MapPanelViewDelegate,
+    MapPanelDelegate, _MapPanelDelegate,
     UIContextMenuInteractionDelegate,
     UILargeContentViewerInteractionDelegate {
 
@@ -397,10 +397,7 @@ class MapViewController: UIViewController,
 
         // Set a content view controller.
 //        panel.set(contentViewController: mapPanelController)
-        let host = UIHostingController(
-            rootView: MapPanelView(provider: self.panelProvider, delegate: self)
-        )
-        panel.set(contentViewController: host)
+        panel.set(contentViewController: UINavigationController(rootViewController: MapPanelController()))
 
         // Track a scroll view (or the siblings) in the content view controller.
 //        panel.track(scrollView: mapPanelController.listView)

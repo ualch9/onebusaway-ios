@@ -36,7 +36,7 @@ struct MapPanelStopView: View {
 }
 
 extension StopViewModel {
-    var panelViewIdentifier: MapPanelViewIdentifier {
+    var panelViewIdentifier: MapPanelItemIdentifier {
         return .stop(id)
     }
 }

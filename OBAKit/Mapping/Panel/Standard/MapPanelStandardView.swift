@@ -1,5 +1,5 @@
 //
-//  MapPanelView.swift
+//  MapPanelStandardView.swift
 //  OBAKit
 //
 //  Created by Alan Chu on 10/10/22.
@@ -8,23 +8,12 @@
 import SwiftUI
 import OBAKitCore
 
-protocol MapPanelViewDelegate: AnyObject {
-    @MainActor func didSelect(alert alertID: String)
-    @MainActor func didSelect(stop stopID: Stop.ID)
-    @MainActor func didSelect(bookmark bookmarkID: Bookmark.ID)
-}
-
-enum MapPanelViewIdentifier: Hashable {
-    case stop(Stop.ID)
-    case alert(String)
-}
-
-struct MapPanelView: View {
+struct MapPanelStandardView: View {
     @ObservedObject public var provider: OBAMapPanelProvider
-    public weak var delegate: MapPanelViewDelegate?
+    public weak var delegate: _MapPanelDelegate?
 
     @FocusState fileprivate var focusedOnTextField: Bool
-    @State fileprivate var selectedItem: MapPanelViewIdentifier?
+    @State fileprivate var selectedItem: MapPanelItemIdentifier?
 
     var body: some View {
         List(selection: $selectedItem) {
@@ -61,6 +50,8 @@ struct MapPanelView: View {
                 delegate.didSelect(stop: id)
             case .alert(let id):
                 delegate.didSelect(alert: id)
+            case .bookmark(let id):
+                delegate.didSelect(bookmark: id)
             }
         }
     }
@@ -79,6 +70,6 @@ struct MapPanelView_Previews: PreviewProvider {
         recentStops: StopViewModel.samples.reversed())
 
     static var previews: some View {
-        MapPanelView(provider: provider)
+        MapPanelStandardView(provider: provider)
     }
 }
