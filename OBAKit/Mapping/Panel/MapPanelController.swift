@@ -26,6 +26,8 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
         func hostingControllerForPanel<Content: View>(_ view: Content) -> UIHostingController<Content> {
             let controller = UIHostingController(rootView: view)
             controller.view.translatesAutoresizingMaskIntoConstraints = false
+
+            // Hides the background because the panel has a fancy VisualEffect view
             controller.view.isOpaque = false
             controller.view.backgroundColor = .clear
             return controller
@@ -79,21 +81,9 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
         ])
     }
 
-    override func viewWillAppear(_ animated: Bool) {
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
         self.navigationController?.setNavigationBarHidden(true, animated: false)
-        super.viewWillAppear(animated)
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        // On iOS 15, self.navigationController might be nil during `viewWillAppear`,
-        // so we will also hide the navigation bar here "just in case".
-        if #available(iOS 16, *) {
-            /* noop */
-        } else {
-            self.navigationController?.setNavigationBarHidden(true, animated: false)
-        }
-
-        super.viewDidAppear(animated)
     }
 
     // MARK: - UISearchBarDelegate methods
