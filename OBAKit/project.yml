@@ -9,6 +9,7 @@ targets:
       - package: Hyperconnectivity
       - package: Eureka
       - package: FloatingPanel
+      - package: Introspect
       - package: MarqueeLabel
     postBuildScripts:
       - path: "../scripts/swiftlint.sh"

@@ -97,6 +97,9 @@ packages:
     Hyperconnectivity:
         url: https://github.com/rwbutler/Hyperconnectivity.git
         exactVersion: 1.1.0
+    Introspect:
+        url: https://github.com/siteline/SwiftUI-Introspect.git # Does not publish version tags.
+        revision: d3cbf32788250741d397cfb5bcd532c37aa1096d      # August 21, 2022.
     MarqueeLabel:
         url: https://github.com/cbpowell/MarqueeLabel.git
         exactVersion: 4.0.5

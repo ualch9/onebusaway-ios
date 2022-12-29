@@ -23,10 +23,16 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.standardView = UIHostingController(rootView: MapPanelStandardView(provider: standardProvider))
-        self.standardView.view.translatesAutoresizingMaskIntoConstraints = false
-        self.searchView = UIHostingController(rootView: MapPanelSearchView(provider: searchProvider))
-        self.searchView.view.translatesAutoresizingMaskIntoConstraints = false
+        func hostingControllerForPanel<Content: View>(_ view: Content) -> UIHostingController<Content> {
+            let controller = UIHostingController(rootView: view)
+            controller.view.translatesAutoresizingMaskIntoConstraints = false
+            controller.view.isOpaque = false
+            controller.view.backgroundColor = .clear
+            return controller
+        }
+
+        self.standardView = hostingControllerForPanel(MapPanelStandardView(provider: standardProvider))
+        self.searchView = hostingControllerForPanel(MapPanelSearchView(provider: searchProvider))
 
         self.searchBar = UISearchBar.autolayoutNew()
         self.searchBar.placeholder = "Search"
@@ -49,8 +55,8 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
             return
         }
 
-        let viewToRemove: UIViewController! = show ? standardView : searchView
-        let viewToAdd: UIViewController! = show ? searchView : standardView
+        let viewToRemove: UIViewController = show ? standardView : searchView
+        let viewToAdd: UIViewController = show ? searchView : standardView
 
         // Tear down the view to remove
         viewToRemove.view.constraints.forEach(viewToRemove.view.removeConstraint)
@@ -76,6 +82,18 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
     override func viewWillAppear(_ animated: Bool) {
         self.navigationController?.setNavigationBarHidden(true, animated: false)
         super.viewWillAppear(animated)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        // On iOS 15, self.navigationController might be nil during `viewWillAppear`,
+        // so we will also hide the navigation bar here "just in case".
+        if #available(iOS 16, *) {
+            /* noop */
+        } else {
+            self.navigationController?.setNavigationBarHidden(true, animated: false)
+        }
+
+        super.viewDidAppear(animated)
     }
 
     // MARK: - UISearchBarDelegate methods

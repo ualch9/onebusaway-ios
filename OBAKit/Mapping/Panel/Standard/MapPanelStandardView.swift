@@ -7,6 +7,7 @@
 
 import SwiftUI
 import OBAKitCore
+import Introspect
 
 struct MapPanelStandardView: View {
     @ObservedObject public var provider: OBAMapPanelProvider
@@ -37,7 +38,7 @@ struct MapPanelStandardView: View {
                 listHeader("Nearby Stops")
             }
         }
-        .listStyle(.insetGrouped)
+        .removeListBackground()
         .onAppear {
             self.selectedItem = nil
         }

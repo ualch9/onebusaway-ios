@@ -103,6 +103,7 @@ struct MapPanelSearchView: View {
                 }
             }
         }
+        .removeListBackground()
         .task(id: selectedItem) {
             guard let selectedItem else {
                 return
