@@ -12,7 +12,7 @@ import OBAKitCore
 // A view controller with a UISearchBar at the top.
 // This is theoretically SwiftUI's `.searchable()`, but we need to respond to
 // text field events (i.e. expand panel on focus of search bar).
-class MapPanelController: VisualEffectViewController, UISearchControllerDelegate, UISearchBarDelegate {
+class MapPanelController: VisualEffectViewController, UISearchBarDelegate {
 
     private let standardProvider = OBAMapPanelProvider()
     private var standardView: UIHostingController<MapPanelStandardView>!
@@ -21,7 +21,6 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
     private var searchView: UIHostingController<MapPanelSearchView>!
 
     private var searchBar: UISearchBar!
-    private var searchController: UISearchController!
 
     override func viewDidLoad() {
         super.viewDidLoad()
