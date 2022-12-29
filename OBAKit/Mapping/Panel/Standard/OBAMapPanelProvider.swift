@@ -13,10 +13,22 @@ class OBAMapPanelProvider: ObservableObject, MapRegionDelegate {
     @Published var nearbyStops: [StopViewModel] = []
     @Published var recentStops: [StopViewModel] = []
 
-    init(alerts: [MapPanelAlertView.Item] = [], nearbyStops: [StopViewModel] = [], recentStops: [StopViewModel] = []) {
+    typealias SearchResultType = Result<(any QuickSearchResults), Error>
+    @Published var searchResults: SearchResultType?
+
+    let searchOptions: [IdentifableQuickSearchOption] = [
+        IdentifableQuickSearchOption("route", QuickSearchRoute.self),
+        IdentifableQuickSearchOption("address", QuickSearchAddress.self)
+    ]
+
+    init(alerts: [MapPanelAlertView.Item] = [],
+         nearbyStops: [StopViewModel] = [],
+         recentStops: [StopViewModel] = [],
+         searchResults: SearchResultType? = nil) {
         self.alerts = alerts
         self.nearbyStops = nearbyStops
         self.recentStops = recentStops
+        self.searchResults = nil
     }
 
     func mapRegionManager(_ manager: MapRegionManager, stopsUpdated stops: [Stop]) {

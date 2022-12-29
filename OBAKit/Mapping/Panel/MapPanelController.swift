@@ -14,7 +14,12 @@ import OBAKitCore
 // text field events (i.e. expand panel on focus of search bar).
 class MapPanelController: VisualEffectViewController, UISearchBarDelegate {
 
-    private let standardProvider = OBAMapPanelProvider()
+//    private let standardProvider = OBAMapPanelProvider()
+    private let standardProvider = OBAMapPanelProvider(
+        alerts: MapPanelAlertView.Item.samples,
+        nearbyStops: StopViewModel.samples,
+        recentStops: StopViewModel.samples.reversed())
+    
     private var standardView: UIHostingController<MapPanelStandardView>!
 
     private let searchProvider = MapPanelSearchProvider(nil)
@@ -120,5 +125,6 @@ struct MapSearchViewControllerPreviews: PreviewProvider {
         UIViewControllerPreview {
             MapPanelController()
         }
+        .background(Color.gray) // gray to mimic visual effect backdrop
     }
 }
