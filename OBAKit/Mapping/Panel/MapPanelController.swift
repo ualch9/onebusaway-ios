@@ -9,6 +9,9 @@ import SwiftUI
 import Foundation
 import OBAKitCore
 
+// A view controller with a UISearchBar at the top.
+// This is theoretically SwiftUI's `.searchable()`, but we need to respond to
+// text field events (i.e. expand panel on focus of search bar).
 class MapPanelController: VisualEffectViewController, UISearchControllerDelegate, UISearchBarDelegate {
 
     private let standardProvider = OBAMapPanelProvider()
@@ -51,11 +54,14 @@ class MapPanelController: VisualEffectViewController, UISearchControllerDelegate
         showSearchView(false)
     }
 
-    var isShowingSearchView: Bool = false
+    private var isShowingSearchView: Bool = false
     func showSearchView(_ show: Bool) {
-        if show && isShowingSearchView {
+        // Continue only if `show` is a changed value.
+        if (show && isShowingSearchView) || (!show && !isShowingSearchView) {
             return
         }
+
+        isShowingSearchView = show
 
         let viewToRemove: UIViewController = show ? standardView : searchView
         let viewToAdd: UIViewController = show ? searchView : standardView
